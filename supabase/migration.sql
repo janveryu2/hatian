@@ -201,6 +201,13 @@ RETURNS SETOF UUID AS $$
   SELECT dorm_id FROM public.dorm_members WHERE user_id = user_uuid;
 $$ LANGUAGE sql SECURITY DEFINER STABLE;
 
+-- Function to get all dorm IDs that have active invites (allows preview on join)
+CREATE OR REPLACE FUNCTION public.get_invited_dorm_ids()
+RETURNS SETOF UUID AS $$
+  SELECT dorm_id FROM public.dorm_invites
+  WHERE is_used = FALSE AND expires_at > NOW();
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
 -- Function to check if a user is an admin of a dorm
 CREATE OR REPLACE FUNCTION public.is_dorm_admin(dorm_uuid UUID, user_uuid UUID)
 RETURNS BOOLEAN AS $$
@@ -288,11 +295,12 @@ CREATE POLICY "Users can insert/update own profile"
 -- 4.2 Dorms RLS
 ALTER TABLE public.dorms ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Members can read their dorms"
+CREATE POLICY "Members or invite holders can read dorms"
   ON public.dorms FOR SELECT
   USING (
     id IN (SELECT public.get_user_dorm_ids(auth.uid()))
     OR created_by = auth.uid()
+    OR id IN (SELECT public.get_invited_dorm_ids())
   );
 
 CREATE POLICY "Authenticated users can create dorms"
@@ -351,9 +359,12 @@ CREATE POLICY "Members can create invites"
     dorm_id IN (SELECT public.get_user_dorm_ids(auth.uid()))
   );
 
-CREATE POLICY "Admins can update invites"
+CREATE POLICY "Users or admins can update invites"
   ON public.dorm_invites FOR UPDATE
-  USING (public.is_dorm_admin(dorm_id, auth.uid()));
+  USING (
+    auth.uid() IS NOT NULL
+    OR public.is_dorm_admin(dorm_id, auth.uid())
+  );
 
 -- 4.5 Bill Categories RLS
 ALTER TABLE public.bill_categories ENABLE ROW LEVEL SECURITY;
