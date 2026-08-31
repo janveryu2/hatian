@@ -295,7 +295,8 @@ export function calculateSplit(options: SplitOptions): SplitResult {
 export interface RawMemberShare {
   id: string;
   memberId: string;
-  daysPresent: number;
+  daysPresent: number | null;
+  isDaysConfirmed?: boolean;
 }
 
 export interface RecalculatedMemberShare {
@@ -303,6 +304,63 @@ export interface RecalculatedMemberShare {
   memberId: string;
   amountOwedCentavos: number;
   daysPresent: number;
+  isDaysConfirmed: boolean;
+}
+
+export interface SplitRecalculationResult {
+  shares: RecalculatedMemberShare[];
+  isProvisional: boolean;
+  unconfirmedMemberIds: string[];
+}
+
+/**
+ * Recalculates all roommate shares live and reports whether the bill is provisional
+ * (still waiting on non-creator roommates to self-enter their days) or finalized.
+ */
+export function recalculateSharesWithProvisionalStatus(
+  totalAmountCentavos: number,
+  shares: RawMemberShare[],
+  creatorOrPayerMemberId: string,
+  cycleDays: number = 30
+): SplitRecalculationResult {
+  if (shares.length === 0) {
+    return { shares: [], isProvisional: false, unconfirmedMemberIds: [] };
+  }
+
+  const unconfirmed = shares.filter(
+    (s) => s.isDaysConfirmed === false || s.daysPresent === null
+  );
+  const isProvisional = unconfirmed.length > 0;
+  const unconfirmedMemberIds = unconfirmed.map((s) => s.memberId);
+
+  // Normalize shares for calculation: unconfirmed members use cycleDays as provisional estimate
+  const normalizedShares: RawMemberShare[] = shares.map((s) => ({
+    id: s.id,
+    memberId: s.memberId,
+    daysPresent:
+      typeof s.daysPresent === "number" && s.daysPresent >= 0
+        ? s.daysPresent
+        : cycleDays,
+    isDaysConfirmed: s.isDaysConfirmed ?? (s.daysPresent !== null),
+  }));
+
+  const calculatedShares = recalculateSharesFromDaysPresent(
+    totalAmountCentavos,
+    normalizedShares,
+    creatorOrPayerMemberId
+  );
+
+  return {
+    shares: calculatedShares.map((cs) => {
+      const original = shares.find((s) => s.id === cs.id);
+      return {
+        ...cs,
+        isDaysConfirmed: original?.isDaysConfirmed ?? (original?.daysPresent !== null),
+      };
+    }),
+    isProvisional,
+    unconfirmedMemberIds,
+  };
 }
 
 /**
@@ -320,12 +378,13 @@ export function recalculateSharesFromDaysPresent(
       id: s.id,
       memberId: s.memberId,
       amountOwedCentavos: 0,
-      daysPresent: s.daysPresent,
+      daysPresent: s.daysPresent ?? 0,
+      isDaysConfirmed: s.isDaysConfirmed ?? (s.daysPresent !== null),
     }));
   }
 
   const totalPersonDays = shares.reduce(
-    (sum, s) => sum + Math.max(0, s.daysPresent || 0),
+    (sum, s) => sum + Math.max(0, s.daysPresent ?? 0),
     0
   );
 
@@ -339,21 +398,23 @@ export function recalculateSharesFromDaysPresent(
         id: s.id,
         memberId: s.memberId,
         amountOwedCentavos: baseShare + (isLead ? remainder : 0),
-        daysPresent: s.daysPresent,
+        daysPresent: s.daysPresent ?? 0,
+        isDaysConfirmed: s.isDaysConfirmed ?? (s.daysPresent !== null),
       };
     });
   }
 
   let allocatedSum = 0;
   const computed = shares.map((s) => {
-    const days = Math.max(0, s.daysPresent || 0);
+    const days = Math.max(0, s.daysPresent ?? 0);
     const shareAmt = Math.floor((totalAmountCentavos * days) / totalPersonDays);
     allocatedSum += shareAmt;
     return {
       id: s.id,
       memberId: s.memberId,
       amountOwedCentavos: shareAmt,
-      daysPresent: s.daysPresent,
+      daysPresent: days,
+      isDaysConfirmed: s.isDaysConfirmed ?? (s.daysPresent !== null),
     };
   });
 

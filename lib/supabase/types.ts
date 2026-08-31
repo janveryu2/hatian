@@ -236,9 +236,10 @@ export interface Database {
           member_id: string;
           amount_owed_centavos: number;
           amount_paid_centavos: number;
-          payment_status: "unpaid" | "partial" | "paid" | "confirmed";
+          payment_status: "unpaid" | "acknowledged" | "partial" | "paid" | "confirmed";
           days_present?: number | null;
           is_days_confirmed?: boolean;
+          acknowledged_at?: string | null;
           paid_at: string | null;
           confirmed_at: string | null;
           confirmed_by: string | null;
@@ -249,9 +250,10 @@ export interface Database {
           member_id: string;
           amount_owed_centavos: number;
           amount_paid_centavos?: number;
-          payment_status?: "unpaid" | "partial" | "paid" | "confirmed";
+          payment_status?: "unpaid" | "acknowledged" | "partial" | "paid" | "confirmed";
           days_present?: number | null;
           is_days_confirmed?: boolean;
+          acknowledged_at?: string | null;
           paid_at?: string | null;
           confirmed_at?: string | null;
           confirmed_by?: string | null;
@@ -262,9 +264,10 @@ export interface Database {
           member_id?: string;
           amount_owed_centavos?: number;
           amount_paid_centavos?: number;
-          payment_status?: "unpaid" | "partial" | "paid" | "confirmed";
+          payment_status?: "unpaid" | "acknowledged" | "partial" | "paid" | "confirmed";
           days_present?: number | null;
           is_days_confirmed?: boolean;
+          acknowledged_at?: string | null;
           paid_at?: string | null;
           confirmed_at?: string | null;
           confirmed_by?: string | null;

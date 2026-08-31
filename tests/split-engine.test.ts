@@ -6,6 +6,7 @@ import {
   calculateProratedSplit,
   calculateSplit,
   recalculateSharesFromDaysPresent,
+  recalculateSharesWithProvisionalStatus,
   type SplitParticipant,
 } from "@/lib/engine/split";
 
@@ -282,13 +283,74 @@ describe("Hatian Split Engine (TDD)", () => {
       // Bob (30/75) = 22,480 centavos (₱224.80)
       // Charlie (30/75) = 22,480 centavos (₱224.80)
       expect(updated).toEqual([
-        { id: "share_1", memberId: "user_a", amountOwedCentavos: 11240, daysPresent: 15 },
-        { id: "share_2", memberId: "user_b", amountOwedCentavos: 22480, daysPresent: 30 },
-        { id: "share_3", memberId: "user_c", amountOwedCentavos: 22480, daysPresent: 30 },
+        {
+          id: "share_1",
+          memberId: "user_a",
+          amountOwedCentavos: 11240,
+          daysPresent: 15,
+          isDaysConfirmed: true,
+        },
+        {
+          id: "share_2",
+          memberId: "user_b",
+          amountOwedCentavos: 22480,
+          daysPresent: 30,
+          isDaysConfirmed: true,
+        },
+        {
+          id: "share_3",
+          memberId: "user_c",
+          amountOwedCentavos: 22480,
+          daysPresent: 30,
+          isDaysConfirmed: true,
+        },
       ]);
 
       const sum = updated.reduce((acc, s) => acc + s.amountOwedCentavos, 0);
       expect(sum).toBe(56200);
+    });
+
+    it("marks bill shares as provisional when non-creator roommates have not confirmed their days", () => {
+      const currentShares = [
+        { id: "share_1", memberId: "user_a", daysPresent: 30, isDaysConfirmed: true },
+        { id: "share_2", memberId: "user_b", daysPresent: null, isDaysConfirmed: false },
+      ];
+
+      const result = recalculateSharesWithProvisionalStatus(
+        88900, // ₱889.00
+        currentShares,
+        "user_a",
+        30 // cycle days
+      );
+
+      expect(result.isProvisional).toBe(true);
+      expect(result.unconfirmedMemberIds).toEqual(["user_b"]);
+      expect(result.shares.length).toBe(2);
+      // Provisional estimate still balances to 88,900
+      const sum = result.shares.reduce((acc, s) => acc + s.amountOwedCentavos, 0);
+      expect(sum).toBe(88900);
+    });
+
+    it("finalizes bill shares once all roommates confirm their days", () => {
+      const currentShares = [
+        { id: "share_1", memberId: "user_a", daysPresent: 12, isDaysConfirmed: true },
+        { id: "share_2", memberId: "user_b", daysPresent: 11, isDaysConfirmed: true },
+      ];
+
+      const result = recalculateSharesWithProvisionalStatus(
+        88900, // ₱889.00
+        currentShares,
+        "user_a",
+        30
+      );
+
+      expect(result.isProvisional).toBe(false);
+      expect(result.unconfirmedMemberIds).toEqual([]);
+      // Alice (12/23 * 88900) = 46,382 + 1 centavo remainder absorbed by creator (Alice) = 46,383
+      // Bob (11/23 * 88900) = 42,517
+      expect(result.shares[0].amountOwedCentavos).toBe(46383);
+      expect(result.shares[1].amountOwedCentavos).toBe(42517);
+      expect(result.shares[0].amountOwedCentavos + result.shares[1].amountOwedCentavos).toBe(88900);
     });
   });
 });

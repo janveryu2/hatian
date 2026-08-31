@@ -427,24 +427,28 @@ export function CreateBillModal({
               </div>
 
               {/* 4. Roommates' Days Present (The CORE Mental Model) */}
+              {/* 4. Roommate Breakdown & Creator Days Entry */}
               <div className="pt-2">
                 <div className="flex items-center justify-between mb-2.5">
                   <div>
                     <label className="block text-caption font-semibold uppercase text-text-secondary">
-                      Days Present in Dorm
+                      Roommate Self-Entry & Split Preview
                     </label>
                     <p className="text-caption text-text-tertiary">
-                      Billing cycle is {cycleDays} days. Adjust days present for each roommate:
+                      Billing cycle: {cycleDays} days. Roommates will enter their own days upon opening the bill.
                     </p>
                   </div>
                   <span className="text-caption font-mono text-accent-teal bg-accent-teal/10 px-2.5 py-1 rounded-lg">
-                    {totalPersonDays} Total Days
+                    {activeMembers.length} Roommates
                   </span>
                 </div>
 
                 <div className="space-y-2.5">
                   {activeMembers.map((member) => {
-                    const days = effectiveDaysMap[member.id] ?? cycleDays;
+                    const isCreator = member.id === currentUserId;
+                    const days = isCreator
+                      ? effectiveDaysMap[member.id] ?? cycleDays
+                      : null;
                     const share = calculation?.shares.find(
                       (s) => s.memberId === member.id
                     );
@@ -453,15 +457,19 @@ export function CreateBillModal({
                     return (
                       <div
                         key={member.id}
-                        className="p-3.5 rounded-2xl bg-bg-surface border border-border-subtle flex items-center justify-between gap-3"
+                        className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 ${
+                          isCreator
+                            ? "bg-bg-surface border-accent-teal/40 ring-1 ring-accent-teal/20"
+                            : "bg-bg-surface border-border-subtle opacity-90"
+                        }`}
                       >
-                        {/* Member Identity */}
+                        {/* Member Identity & Share Preview */}
                         <div className="min-w-0 flex-1">
                           <p className="text-body-md font-semibold text-text-primary truncate flex items-center gap-1.5">
                             {member.name}
-                            {member.id === currentUserId && (
+                            {isCreator && (
                               <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-accent-teal/15 text-accent-teal shrink-0">
-                                You
+                                You (Creator)
                               </span>
                             )}
                             {isPayer && (
@@ -471,56 +479,67 @@ export function CreateBillModal({
                             )}
                           </p>
 
-                          {/* Live Calculated Share Preview */}
                           <p className="text-caption text-text-tertiary">
-                            Share:{" "}
-                            <span className="font-mono font-bold text-text-primary">
-                              {share ? formatCentavos(share.amountCentavos) : "₱0.00"}
-                            </span>
-                            {totalCentavos > 0 && share && (
-                              <span className="text-[11px] text-text-tertiary ml-1 font-mono">
-                                ({totalPersonDays > 0 ? Math.round((days / totalPersonDays) * 100) : 0}%)
-                              </span>
+                            {totalCentavos === 0 ? (
+                              "(Enter bill amount above to preview)"
+                            ) : (
+                              <>
+                                Est. Share:{" "}
+                                <span className="font-mono font-bold text-text-primary">
+                                  {share ? formatCentavos(share.amountCentavos) : "₱0.00"}
+                                </span>
+                                {!isCreator && (
+                                  <span className="text-[11px] text-accent-sand ml-1.5">
+                                    • Pending self-entry
+                                  </span>
+                                )}
+                              </>
                             )}
                           </p>
                         </div>
 
-                        {/* Days Stepper Control */}
-                        <div className="flex items-center gap-1.5 bg-bg-card border border-border-subtle rounded-xl p-1 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => handleDayChange(member.id, -1)}
-                            disabled={days <= 0}
-                            className="w-8 h-8 rounded-lg bg-bg-surface flex items-center justify-center text-text-secondary hover:text-text-primary font-bold text-body-md disabled:opacity-30 transition-opacity"
-                          >
-                            −
-                          </button>
+                        {/* Days Control for Creator vs. Pending Badge for Others */}
+                        {isCreator ? (
+                          <div className="flex items-center gap-1.5 bg-bg-card border border-border-subtle rounded-xl p-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => handleDayChange(member.id, -1)}
+                              disabled={(effectiveDaysMap[member.id] ?? cycleDays) <= 0}
+                              className="w-8 h-8 rounded-lg bg-bg-surface flex items-center justify-center text-text-secondary hover:text-text-primary font-bold text-body-md disabled:opacity-30 transition-opacity"
+                            >
+                              −
+                            </button>
 
-                          <div className="flex items-center">
-                            <input
-                              type="number"
-                              min="0"
-                              max="365"
-                              value={days}
-                              onChange={(e) =>
-                                handleDirectDayInput(member.id, e.target.value)
-                              }
-                              className="w-10 text-center font-mono font-bold text-body-md text-text-primary bg-transparent focus:outline-none"
-                            />
-                            <span className="text-caption text-text-tertiary pr-1 font-medium">
-                              d
-                            </span>
+                            <div className="flex items-center">
+                              <input
+                                type="number"
+                                min="0"
+                                max="365"
+                                value={effectiveDaysMap[member.id] ?? cycleDays}
+                                onChange={(e) =>
+                                  handleDirectDayInput(member.id, e.target.value)
+                                }
+                                className="w-10 text-center font-mono font-bold text-body-md text-text-primary bg-transparent focus:outline-none"
+                              />
+                              <span className="text-caption text-text-tertiary pr-1 font-medium">
+                                d
+                              </span>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => handleDayChange(member.id, 1)}
+                              disabled={(effectiveDaysMap[member.id] ?? cycleDays) >= cycleDays}
+                              className="w-8 h-8 rounded-lg bg-bg-surface flex items-center justify-center text-text-secondary hover:text-text-primary font-bold text-body-md disabled:opacity-30 transition-opacity"
+                            >
+                              +
+                            </button>
                           </div>
-
-                          <button
-                            type="button"
-                            onClick={() => handleDayChange(member.id, 1)}
-                            disabled={days >= cycleDays}
-                            className="w-8 h-8 rounded-lg bg-bg-surface flex items-center justify-center text-text-secondary hover:text-text-primary font-bold text-body-md disabled:opacity-30 transition-opacity"
-                          >
-                            +
-                          </button>
-                        </div>
+                        ) : (
+                          <span className="px-3 py-1.5 rounded-xl bg-bg-card border border-border-subtle font-mono text-caption text-text-tertiary shrink-0">
+                            Pending Entry
+                          </span>
+                        )}
                       </div>
                     );
                   })}

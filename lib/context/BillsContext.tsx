@@ -22,6 +22,7 @@ import {
   calculateSplit,
   daysBetween,
   recalculateSharesFromDaysPresent,
+  recalculateSharesWithProvisionalStatus,
   type SplitOptions,
 } from "@/lib/engine/split";
 
@@ -39,6 +40,9 @@ export interface BillWithDetails extends Bill {
   myOwedCentavos: number;
   myPaidCentavos: number;
   isFullySettled: boolean;
+  isProvisional: boolean;
+  unconfirmedCount: number;
+  unconfirmedNames: string[];
 }
 
 export interface BillsContextType {
@@ -65,6 +69,7 @@ export interface BillsContextType {
     shareId: string,
     newDays: number
   ) => Promise<void>;
+  acknowledgeShare: (shareId: string) => Promise<void>;
   markSharePaid: (shareId: string) => Promise<void>;
   confirmSharePaid: (shareId: string) => Promise<void>;
   deleteBill: (billId: string) => Promise<void>;
@@ -207,6 +212,14 @@ export function BillsProvider({ children }: { children: React.ReactNode }) {
               s.amount_paid_centavos >= s.amount_owed_centavos
           );
 
+        const unconfirmedShares = billShares.filter(
+          (s) => !s.is_days_confirmed && s.days_present === null
+        );
+        const isProvisional = unconfirmedShares.length > 0;
+        const unconfirmedNames = unconfirmedShares.map(
+          (s) => s.userName || "Roommate"
+        );
+
         return {
           ...b,
           category: catMap.get(b.category_id) || null,
@@ -217,6 +230,9 @@ export function BillsProvider({ children }: { children: React.ReactNode }) {
           myOwedCentavos: userShare?.amount_owed_centavos || 0,
           myPaidCentavos: userShare?.amount_paid_centavos || 0,
           isFullySettled,
+          isProvisional,
+          unconfirmedCount: unconfirmedShares.length,
+          unconfirmedNames,
         };
       });
 
@@ -292,17 +308,10 @@ export function BillsProvider({ children }: { children: React.ReactNode }) {
     ): Promise<Bill> => {
       const supabase = getClient();
       if (!supabase || !user || !activeDorm) {
-        throw new Error("User or active dorm not found");
+        throw new Error("Missing auth or dorm context");
       }
 
-      const calculation = calculateSplit({
-        ...splitConfig,
-        totalAmountCentavos: billData.amountCentavos,
-        creatorId: user.id,
-        billingPeriodStart: billData.billingPeriodStart,
-        billingPeriodEnd: billData.billingPeriodEnd,
-      });
-
+      // 1. Insert Bill record
       const { data: newBill, error: billError } = await supabase
         .from("bills")
         .insert({
@@ -330,43 +339,58 @@ export function BillsProvider({ children }: { children: React.ReactNode }) {
         .select("id, user_id")
         .eq("dorm_id", activeDorm.id);
 
-      const userToMemberMap = new Map<string, string>();
-      dormMembers?.forEach((dm) => userToMemberMap.set(dm.user_id, dm.id));
-
       const defaultCycleDays = daysBetween(
         billData.billingPeriodStart,
         billData.billingPeriodEnd
       );
 
-      const shareInserts = calculation.shares
-        .map((share) => {
-          const memberId = userToMemberMap.get(share.memberId);
-          if (!memberId) return null;
+      const rawSharesToCalc = (dormMembers || []).map((dm) => {
+        const isCreator = dm.user_id === user.id;
+        const memberDays = isCreator
+          ? splitConfig.daysPresent?.[dm.user_id] ?? defaultCycleDays
+          : null;
 
-          const isPayer = share.memberId === billData.paidBy;
-          const memberDays =
-            splitConfig.daysPresent?.[share.memberId] ?? defaultCycleDays;
+        return {
+          id: dm.id,
+          memberId: dm.id,
+          daysPresent: memberDays,
+          isDaysConfirmed: isCreator,
+        };
+      });
 
-          return {
-            bill_id: newBill.id,
-            member_id: memberId,
-            amount_owed_centavos: share.amountCentavos,
-            amount_paid_centavos: isPayer ? share.amountCentavos : 0,
-            payment_status: isPayer
-              ? ("confirmed" as const)
-              : ("unpaid" as const),
-            days_present: memberDays,
-            is_days_confirmed: false,
-            paid_at: isPayer ? new Date().toISOString() : null,
-            confirmed_at: isPayer ? new Date().toISOString() : null,
-          };
-        })
-        .filter(Boolean);
+      const { shares: initialShares } = recalculateSharesWithProvisionalStatus(
+        billData.amountCentavos,
+        rawSharesToCalc,
+        billData.paidBy,
+        defaultCycleDays
+      );
+
+      const shareInserts = (dormMembers || []).map((dm) => {
+        const isCreator = dm.user_id === user.id;
+        const isPayer = dm.user_id === billData.paidBy;
+        const match = initialShares.find((s) => s.memberId === dm.id);
+        const amt = match?.amountOwedCentavos ?? 0;
+        const memberDays = isCreator
+          ? splitConfig.daysPresent?.[dm.user_id] ?? defaultCycleDays
+          : null;
+
+        return {
+          bill_id: newBill.id,
+          member_id: dm.id,
+          amount_owed_centavos: amt,
+          amount_paid_centavos: isPayer ? amt : 0,
+          payment_status: isPayer
+            ? ("confirmed" as const)
+            : ("unpaid" as const),
+          days_present: memberDays,
+          is_days_confirmed: isCreator,
+          paid_at: isPayer ? new Date().toISOString() : null,
+          confirmed_at: isPayer ? new Date().toISOString() : null,
+        };
+      });
 
       if (shareInserts.length > 0) {
-        await supabase
-          .from("bill_shares")
-          .insert(shareInserts as NonNullable<(typeof shareInserts)[0]>[]);
+        await supabase.from("bill_shares").insert(shareInserts);
       }
 
       await loadBills();
@@ -396,13 +420,15 @@ export function BillsProvider({ children }: { children: React.ReactNode }) {
             ? newDays
             : typeof s.days_present === "number"
             ? s.days_present
-            : cycleDays,
+            : null,
+        isDaysConfirmed: s.id === shareId ? true : s.is_days_confirmed ?? false,
       }));
 
-      const recalculated = recalculateSharesFromDaysPresent(
+      const { shares: recalculated } = recalculateSharesWithProvisionalStatus(
         targetBill.amount_centavos,
         rawShares,
-        targetBill.paid_by
+        targetBill.paid_by,
+        cycleDays
       );
 
       const recalMap = new Map(recalculated.map((r) => [r.id, r]));
@@ -417,8 +443,7 @@ export function BillsProvider({ children }: { children: React.ReactNode }) {
             return {
               ...s,
               days_present: r.daysPresent,
-              is_days_confirmed:
-                s.id === shareId ? true : s.is_days_confirmed ?? false,
+              is_days_confirmed: r.isDaysConfirmed,
               amount_owed_centavos: r.amountOwedCentavos,
             };
           });
@@ -426,12 +451,21 @@ export function BillsProvider({ children }: { children: React.ReactNode }) {
           const myUpdatedShare =
             updatedShares.find((s) => s.profile?.id === user?.id) || null;
 
+          const unconfirmedShares = updatedShares.filter(
+            (s) => !s.is_days_confirmed && s.days_present === null
+          );
+
           return {
             ...b,
             shares: updatedShares,
             userShare: myUpdatedShare || b.userShare,
             myOwedCentavos:
               myUpdatedShare?.amount_owed_centavos ?? b.myOwedCentavos,
+            isProvisional: unconfirmedShares.length > 0,
+            unconfirmedCount: unconfirmedShares.length,
+            unconfirmedNames: unconfirmedShares.map(
+              (s) => s.userName || "Roommate"
+            ),
           };
         })
       );
@@ -442,7 +476,7 @@ export function BillsProvider({ children }: { children: React.ReactNode }) {
           .from("bill_shares")
           .update({
             days_present: r.daysPresent,
-            is_days_confirmed: r.id === shareId ? true : undefined,
+            is_days_confirmed: r.isDaysConfirmed,
             amount_owed_centavos: r.amountOwedCentavos,
           })
           .eq("id", r.id)
@@ -450,7 +484,45 @@ export function BillsProvider({ children }: { children: React.ReactNode }) {
 
       await Promise.all(updates);
     },
-    [getClient, bills]
+    [getClient, bills, user?.id]
+  );
+
+  const acknowledgeShare = useCallback(
+    async (shareId: string) => {
+      const supabase = getClient();
+      if (!supabase) return;
+
+      const { error: ackErr } = await supabase
+        .from("bill_shares")
+        .update({
+          payment_status: "acknowledged",
+          acknowledged_at: new Date().toISOString(),
+        })
+        .eq("id", shareId);
+
+      if (ackErr) throw ackErr;
+
+      // Optimistically update
+      setBills((prev) =>
+        prev.map((b) => {
+          const hasShare = b.shares.some((s) => s.id === shareId);
+          if (!hasShare) return b;
+          return {
+            ...b,
+            shares: b.shares.map((s) =>
+              s.id === shareId
+                ? {
+                    ...s,
+                    payment_status: "acknowledged" as const,
+                    acknowledged_at: new Date().toISOString(),
+                  }
+                : s
+            ),
+          };
+        })
+      );
+    },
+    [getClient]
   );
 
   const markSharePaid = useCallback(
@@ -540,6 +612,7 @@ export function BillsProvider({ children }: { children: React.ReactNode }) {
       error,
       createBill,
       updateShareDays,
+      acknowledgeShare,
       markSharePaid,
       confirmSharePaid,
       deleteBill,
@@ -553,6 +626,7 @@ export function BillsProvider({ children }: { children: React.ReactNode }) {
       error,
       createBill,
       updateShareDays,
+      acknowledgeShare,
       markSharePaid,
       confirmSharePaid,
       deleteBill,

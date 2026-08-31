@@ -18,6 +18,7 @@ interface BillDetailModalProps {
     shareId: string,
     newDays: number
   ) => Promise<void>;
+  onAcknowledge?: (shareId: string) => Promise<void>;
   onMarkPaid: (shareId: string) => Promise<void>;
   onConfirmPaid: (shareId: string) => Promise<void>;
   onDeleteBill: (billId: string) => Promise<void>;
@@ -30,6 +31,7 @@ export function BillDetailModal({
   isAdmin,
   onClose,
   onUpdateDays,
+  onAcknowledge,
   onMarkPaid,
   onConfirmPaid,
   onDeleteBill,
@@ -57,6 +59,7 @@ export function BillDetailModal({
     bill.shares.find((s) => s.profile?.id === currentUserId) || bill.userShare;
   const isMyShareConfirmed = myShare?.payment_status === "confirmed";
   const isMySharePaid = myShare?.payment_status === "paid";
+  const isMyShareAcknowledged = myShare?.payment_status === "acknowledged";
 
   const handleDayChange = async (shareId: string, currentDays: number, delta: number) => {
     if (!onUpdateDays) return;
@@ -67,6 +70,21 @@ export function BillDetailModal({
       await onUpdateDays(bill.id, shareId, nextDays);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to update days");
+    } finally {
+      setProcessingShareId(null);
+    }
+  };
+
+  const handleAcknowledge = async (shareId: string) => {
+    if (!onAcknowledge) return;
+    try {
+      setProcessingShareId(shareId);
+      setError(null);
+      await onAcknowledge(shareId);
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : "Failed to record pay later"
+      );
     } finally {
       setProcessingShareId(null);
     }
@@ -137,7 +155,7 @@ export function BillDetailModal({
             <div className="w-12 h-1.5 bg-border-subtle rounded-full mx-auto mb-4 sm:hidden" />
 
             {/* Header */}
-            <div className="flex items-start justify-between mb-4">
+            <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
                 <span className="text-3xl p-2.5 rounded-2xl bg-accent-teal/10 text-accent-teal">
                   {bill.category?.icon || "📋"}
@@ -160,6 +178,25 @@ export function BillDetailModal({
               </button>
             </div>
 
+            {/* Provisional vs Finalized Status Banner */}
+            {bill.isProvisional ? (
+              <div className="mb-4 px-3.5 py-2 rounded-xl bg-accent-sand/15 border border-accent-sand/30 flex items-center gap-2 text-caption text-accent-sand font-medium">
+                <span>⏳</span>
+                <span>
+                  Estimated shares: waiting on{" "}
+                  {bill.unconfirmedNames.length > 0
+                    ? bill.unconfirmedNames.join(", ")
+                    : "roommates"}{" "}
+                  to enter days
+                </span>
+              </div>
+            ) : (
+              <div className="mb-4 px-3.5 py-1.5 rounded-xl bg-accent-teal/10 border border-accent-teal/20 flex items-center gap-2 text-caption text-accent-teal font-medium">
+                <span>✓</span>
+                <span>Final split: all roommate days confirmed</span>
+              </div>
+            )}
+
             {error && (
               <div className="mb-4 p-3.5 rounded-xl bg-accent-terracotta/10 border border-accent-terracotta/20 text-accent-terracotta text-body-sm">
                 {error}
@@ -174,13 +211,15 @@ export function BillDetailModal({
                     ? "bg-accent-teal/10 border-accent-teal/30"
                     : isMySharePaid
                     ? "bg-accent-sand/10 border-accent-sand/30"
+                    : isMyShareAcknowledged
+                    ? "bg-accent-teal/5 border-accent-teal/20"
                     : "bg-accent-coral/10 border-accent-coral/30"
                 }`}
               >
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <span className="text-caption font-semibold uppercase tracking-wider block text-text-secondary">
-                      Your Share Owed
+                      {bill.isProvisional ? "Your Estimated Share" : "Your Share Owed"}
                     </span>
                     <p className="text-heading-2 font-mono font-bold text-text-primary">
                       {formatCentavos(myShare.amount_owed_centavos)}
@@ -190,7 +229,7 @@ export function BillDetailModal({
                     </p>
                   </div>
 
-                  <div className="shrink-0">
+                  <div className="shrink-0 flex items-center gap-2">
                     {isMyShareConfirmed ? (
                       <span className="px-3.5 py-1.5 rounded-xl bg-accent-teal text-white text-body-sm font-semibold flex items-center gap-1.5 shadow-sm">
                         <span>✓</span> Settled
@@ -199,22 +238,46 @@ export function BillDetailModal({
                       <span className="px-3.5 py-1.5 rounded-xl bg-accent-sand/20 text-accent-sand text-body-sm font-semibold">
                         Sent • Pending Confirm
                       </span>
+                    ) : isMyShareAcknowledged ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-caption px-2.5 py-1 rounded-xl bg-accent-teal/15 text-accent-teal font-semibold">
+                          Will Pay Later
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleMarkPaid(myShare.id)}
+                          disabled={processingShareId === myShare.id}
+                          className="btn-primary py-2 px-3 text-caption font-bold shadow-sm"
+                        >
+                          Mark Paid →
+                        </button>
+                      </div>
                     ) : (
-                      <button
-                        type="button"
-                        onClick={() => handleMarkPaid(myShare.id)}
-                        disabled={processingShareId === myShare.id}
-                        className="btn-primary py-2.5 px-4 text-body-sm font-bold shadow-md shadow-accent-teal/20 flex items-center gap-1.5"
-                      >
-                        {processingShareId === myShare.id ? (
-                          "Updating..."
-                        ) : (
-                          <>
-                            <span>Mark Paid</span>
-                            <span>→</span>
-                          </>
-                        )}
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleAcknowledge(myShare.id)}
+                          disabled={processingShareId === myShare.id}
+                          className="px-3 py-2 rounded-xl bg-bg-surface border border-border-subtle text-text-secondary hover:text-text-primary text-caption font-semibold transition-colors"
+                        >
+                          Pay Later
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleMarkPaid(myShare.id)}
+                          disabled={processingShareId === myShare.id}
+                          className="btn-primary py-2 px-3.5 text-body-sm font-bold shadow-md shadow-accent-teal/20 flex items-center gap-1"
+                        >
+                          {processingShareId === myShare.id ? (
+                            "Updating..."
+                          ) : (
+                            <>
+                              <span>Mark Paid</span>
+                              <span>→</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -262,6 +325,7 @@ export function BillDetailModal({
                   const isShareOwner = share.profile?.id === currentUserId;
                   const isConfirmed = share.payment_status === "confirmed";
                   const isPaid = share.payment_status === "paid";
+                  const isAcknowledged = share.payment_status === "acknowledged";
                   const isBusy = processingShareId === share.id;
                   const days = share.days_present ?? cycleDays;
                   const canEditDays = isShareOwner;
@@ -326,15 +390,29 @@ export function BillDetailModal({
                                 Pending Confirm
                               </span>
                             )
+                          ) : isAcknowledged ? (
+                            <span className="px-2.5 py-1 rounded-full bg-accent-teal/10 text-accent-teal text-caption font-medium">
+                              Will pay later
+                            </span>
                           ) : isShareOwner ? (
-                            <button
-                              type="button"
-                              onClick={() => handleMarkPaid(share.id)}
-                              disabled={isBusy}
-                              className="btn-primary py-1 px-3 text-caption font-semibold"
-                            >
-                              {isBusy ? "..." : "Mark Paid"}
-                            </button>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => handleAcknowledge(share.id)}
+                                disabled={isBusy}
+                                className="px-2 py-1 rounded-lg bg-bg-card border border-border-subtle text-caption text-text-secondary hover:text-text-primary font-medium transition-colors"
+                              >
+                                Pay Later
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleMarkPaid(share.id)}
+                                disabled={isBusy}
+                                className="btn-primary py-1 px-2.5 text-caption font-semibold"
+                              >
+                                {isBusy ? "..." : "Mark Paid"}
+                              </button>
+                            </div>
                           ) : (
                             <span className="px-2.5 py-1 rounded-full bg-accent-coral/15 text-accent-coral text-caption font-medium">
                               Unpaid
@@ -343,7 +421,7 @@ export function BillDetailModal({
                         </div>
                       </div>
 
-                      {/* Bottom Row: Days Stepper (Editable for Owner/Admin, View-Only for Others) */}
+                      {/* Bottom Row: Days Stepper (Editable for Owner, View-Only for Others) */}
                       <div className="pt-2 border-t border-border-subtle/50 flex items-center justify-between">
                         <div className="flex items-center gap-1.5">
                           <span className="text-caption text-text-tertiary">
@@ -354,8 +432,8 @@ export function BillDetailModal({
                               Confirmed
                             </span>
                           ) : (
-                            <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-bg-card text-text-tertiary font-medium">
-                              Default
+                            <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-accent-sand/15 text-accent-sand font-medium">
+                              Pending Entry
                             </span>
                           )}
                         </div>
@@ -384,7 +462,9 @@ export function BillDetailModal({
                           </div>
                         ) : (
                           <span className="px-2.5 py-1 rounded-lg bg-bg-card border border-border-subtle font-mono text-caption font-bold text-text-secondary">
-                            {days} of {cycleDays} days
+                            {share.is_days_confirmed
+                              ? `${days} of ${cycleDays} days`
+                              : `Not yet entered`}
                           </span>
                         )}
                       </div>

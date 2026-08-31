@@ -41,6 +41,7 @@ export default function BillsPage() {
     error,
     createBill,
     updateShareDays,
+    acknowledgeShare,
     markSharePaid,
     confirmSharePaid,
     deleteBill,
@@ -263,13 +264,20 @@ export default function BillsPage() {
 
                     {/* Bottom row: Payer & User's Share Status */}
                     <div className="pt-2.5 border-t border-border-subtle flex items-center justify-between text-body-sm">
-                      <span className="text-caption text-text-tertiary flex items-center gap-1.5">
-                        <span>💳</span>
-                        <span>
-                          {bill.payerProfile?.display_name || "Roommate"}
-                          {isPayer ? " (You)" : ""}
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-caption text-text-tertiary flex items-center gap-1.5 truncate">
+                          <span>💳</span>
+                          <span>
+                            {bill.payerProfile?.display_name || "Roommate"}
+                            {isPayer ? " (You)" : ""}
+                          </span>
                         </span>
-                      </span>
+                        {bill.isProvisional && (
+                          <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-accent-sand/15 text-accent-sand font-medium shrink-0">
+                            Waiting on {bill.unconfirmedCount}
+                          </span>
+                        )}
+                      </div>
 
                       {/* User Share Pill */}
                       {isPayer ? (
@@ -283,6 +291,8 @@ export default function BillsPage() {
                               ? "bg-accent-sage/20 text-accent-sage"
                               : bill.userShare.payment_status === "paid"
                               ? "bg-accent-sand/20 text-accent-sand"
+                              : bill.userShare.payment_status === "acknowledged"
+                              ? "bg-accent-teal/15 text-accent-teal"
                               : "bg-accent-terracotta/15 text-accent-terracotta"
                           }`}
                         >
@@ -290,6 +300,10 @@ export default function BillsPage() {
                             ? "Paid ✓"
                             : bill.userShare.payment_status === "paid"
                             ? "Pending"
+                            : bill.userShare.payment_status === "acknowledged"
+                            ? `Will pay ${formatCentavos(
+                                bill.userShare.amount_owed_centavos
+                              )}`
                             : `You owe ${formatCentavos(
                                 bill.userShare.amount_owed_centavos
                               )}`}
@@ -326,6 +340,7 @@ export default function BillsPage() {
         isAdmin={isAdmin}
         onClose={() => setSelectedBillId(null)}
         onUpdateDays={updateShareDays}
+        onAcknowledge={acknowledgeShare}
         onMarkPaid={markSharePaid}
         onConfirmPaid={confirmSharePaid}
         onDeleteBill={deleteBill}
