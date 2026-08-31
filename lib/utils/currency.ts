@@ -80,3 +80,12 @@ export function centavosToDecimal(centavos: number): string {
   const cents = abs % 100;
   return `${centavos < 0 ? "-" : ""}${pesos}.${cents.toString().padStart(2, "0")}`;
 }
+
+/** Convenience alias for formatPeso */
+export const formatCentavos = formatPeso;
+
+/** Converts number/float pesos directly to integer centavos */
+export function pesosToCentavos(pesos: number): number {
+  return Math.round(pesos * 100);
+}
+

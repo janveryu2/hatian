@@ -4,7 +4,10 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useDorm } from "@/lib/hooks/useDorm";
+import { useBills } from "@/lib/hooks/useBills";
+import { useSettlement } from "@/lib/hooks/useSettlement";
 import { getGreeting, formatToday } from "@/lib/utils/dates";
+import { formatCentavos } from "@/lib/utils/currency";
 import { SPRING, STAGGER_DELAY } from "@/lib/utils/constants";
 
 const containerVariants = {
@@ -30,9 +33,17 @@ const itemVariants = {
 export default function HomePage() {
   const { profile } = useAuth();
   const { activeDorm, members, isLoading: isDormLoading } = useDorm();
+  const { bills } = useBills();
+  const { myNetBalance, payments } = useSettlement();
 
   const firstName = profile?.display_name?.split(" ")[0] ?? "there";
   const activeMembers = members.filter((m) => m.status === "active");
+
+  const youOweCentavos = myNetBalance < 0 ? Math.abs(myNetBalance) : 0;
+  const owedToYouCentavos = myNetBalance > 0 ? myNetBalance : 0;
+
+  const upcomingBills = bills.filter((b) => !b.isFullySettled).slice(0, 3);
+  const recentPayments = payments.slice(0, 3);
 
   return (
     <motion.div
@@ -90,10 +101,11 @@ export default function HomePage() {
         </motion.div>
       )}
 
-      {/* Balance cards — You Owe / Owed to You */}
+      {/* Live Net Balance Cards */}
       <motion.div variants={itemVariants} className="grid grid-cols-2 gap-3">
-        <div
-          className="card p-4 flex flex-col gap-1.5"
+        <Link
+          href="/settle"
+          className="card p-4 flex flex-col gap-1.5 hover:border-accent-coral/50 transition-colors"
           style={{ borderLeft: "3px solid var(--accent-coral)" }}
         >
           <span className="text-caption text-text-tertiary uppercase tracking-wider">
@@ -103,13 +115,16 @@ export default function HomePage() {
             className="text-currency-lg font-mono font-bold"
             style={{ color: "var(--accent-coral)" }}
           >
-            ₱0.00
+            {formatCentavos(youOweCentavos)}
           </span>
-          <span className="text-caption text-text-tertiary">All settled up</span>
-        </div>
+          <span className="text-caption text-text-tertiary">
+            {youOweCentavos === 0 ? "All settled up" : "Tap to Settle Up →"}
+          </span>
+        </Link>
 
-        <div
-          className="card p-4 flex flex-col gap-1.5"
+        <Link
+          href="/settle"
+          className="card p-4 flex flex-col gap-1.5 hover:border-accent-teal/50 transition-colors"
           style={{ borderLeft: "3px solid var(--accent-teal)" }}
         >
           <span className="text-caption text-text-tertiary uppercase tracking-wider">
@@ -119,13 +134,15 @@ export default function HomePage() {
             className="text-currency-lg font-mono font-bold"
             style={{ color: "var(--accent-teal)" }}
           >
-            ₱0.00
+            {formatCentavos(owedToYouCentavos)}
           </span>
-          <span className="text-caption text-text-tertiary">0 pending claims</span>
-        </div>
+          <span className="text-caption text-text-tertiary">
+            {owedToYouCentavos === 0 ? "No pending claims" : "From roommates"}
+          </span>
+        </Link>
       </motion.div>
 
-      {/* Active Dorm Quick Info */}
+      {/* Roommates Card */}
       {activeDorm && (
         <motion.div variants={itemVariants} className="card p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -176,38 +193,107 @@ export default function HomePage() {
             href="/bills"
             className="text-body-sm text-accent-teal font-medium hover:underline"
           >
-            View all ›
+            View all ({bills.length}) ›
           </Link>
         </div>
 
-        <div className="card p-8 flex flex-col items-center text-center">
-          <div className="text-4xl mb-2.5">📋</div>
-          <p className="text-body-md text-text-secondary font-medium">
-            No upcoming bills
-          </p>
-          <p className="text-body-sm text-text-tertiary mt-1 max-w-[240px]">
-            Your first split is just a tap away
-          </p>
-        </div>
+        {upcomingBills.length === 0 ? (
+          <div className="card p-6 flex flex-col items-center text-center">
+            <div className="text-3xl mb-2">📋</div>
+            <p className="text-body-sm text-text-secondary font-medium">
+              No unpaid bills
+            </p>
+            <p className="text-caption text-text-tertiary mt-0.5">
+              Everything is settled up or add a new bill in the Bills tab
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2.5">
+            {upcomingBills.map((b) => (
+              <Link
+                key={b.id}
+                href="/bills"
+                className="card p-3.5 flex items-center justify-between gap-3 hover:border-accent-teal/40 transition-colors"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="text-2xl p-1.5 rounded-xl bg-accent-teal/10">
+                    {b.category?.icon || "📋"}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-body-sm font-semibold text-text-primary truncate">
+                      {b.category?.name || "Bill"}
+                    </p>
+                    <p className="text-caption text-text-tertiary">
+                      Due {b.due_date}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-right shrink-0">
+                  <p className="font-mono font-bold text-text-primary text-body-sm">
+                    {formatCentavos(b.amount_centavos)}
+                  </p>
+                  <span className="text-caption text-accent-teal font-medium">
+                    {b.shares.length} shares
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </motion.div>
 
-      {/* Quick Settle / Activity Section */}
+      {/* Recent Activity Section */}
       <motion.div variants={itemVariants} className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-heading-3 font-semibold text-text-primary">
-            Recent Activity
+            Recent Settle Activity
           </h2>
+          <Link
+            href="/settle"
+            className="text-body-sm text-accent-teal font-medium hover:underline"
+          >
+            Settle Hub ›
+          </Link>
         </div>
 
-        <div className="card p-8 flex flex-col items-center text-center">
-          <div className="text-4xl mb-2.5">✨</div>
-          <p className="text-body-md text-text-secondary font-medium">
-            No activity yet
-          </p>
-          <p className="text-body-sm text-text-tertiary mt-1 max-w-[240px]">
-            Payments, bill creations, and settlements will appear here
-          </p>
-        </div>
+        {recentPayments.length === 0 ? (
+          <div className="card p-6 flex flex-col items-center text-center">
+            <div className="text-3xl mb-2">✨</div>
+            <p className="text-body-sm text-text-secondary font-medium">
+              No recent settlements
+            </p>
+            <p className="text-caption text-text-tertiary mt-0.5">
+              Settlements via GCash, Maya, or bank transfers will show here
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {recentPayments.map((p) => (
+              <div
+                key={p.id}
+                className="card p-3 flex items-center justify-between gap-3 text-body-sm"
+              >
+                <div>
+                  <p className="font-medium text-text-primary">
+                    {p.fromName} → {p.toName}
+                  </p>
+                  <p className="text-caption text-text-tertiary">
+                    {new Date(p.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-mono font-bold text-text-primary text-body-sm">
+                    {formatCentavos(p.amount_centavos)}
+                  </p>
+                  <span className="text-caption text-accent-sage font-medium">
+                    {p.status === "confirmed" ? "Confirmed ✓" : "Pending"}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </motion.div>
     </motion.div>
   );
