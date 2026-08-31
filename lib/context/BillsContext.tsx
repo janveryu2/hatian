@@ -411,19 +411,27 @@ export function BillsProvider({ children }: { children: React.ReactNode }) {
       setBills((prev) =>
         prev.map((b) => {
           if (b.id !== billId) return b;
+          const updatedShares = b.shares.map((s) => {
+            const r = recalMap.get(s.id);
+            if (!r) return s;
+            return {
+              ...s,
+              days_present: r.daysPresent,
+              is_days_confirmed:
+                s.id === shareId ? true : s.is_days_confirmed ?? false,
+              amount_owed_centavos: r.amountOwedCentavos,
+            };
+          });
+
+          const myUpdatedShare =
+            updatedShares.find((s) => s.profile?.id === user?.id) || null;
+
           return {
             ...b,
-            shares: b.shares.map((s) => {
-              const r = recalMap.get(s.id);
-              if (!r) return s;
-              return {
-                ...s,
-                days_present: r.daysPresent,
-                is_days_confirmed:
-                  s.id === shareId ? true : s.is_days_confirmed ?? false,
-                amount_owed_centavos: r.amountOwedCentavos,
-              };
-            }),
+            shares: updatedShares,
+            userShare: myUpdatedShare || b.userShare,
+            myOwedCentavos:
+              myUpdatedShare?.amount_owed_centavos ?? b.myOwedCentavos,
           };
         })
       );

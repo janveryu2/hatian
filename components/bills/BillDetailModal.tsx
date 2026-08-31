@@ -52,8 +52,9 @@ export function BillDetailModal({
   const isCreator = bill.created_by === currentUserId;
   const canDelete = isAdmin || isCreator;
 
-  // Current user's personal share
-  const myShare = bill.userShare;
+  // Current user's personal share (dynamically derived from latest shares array)
+  const myShare =
+    bill.shares.find((s) => s.profile?.id === currentUserId) || bill.userShare;
   const isMyShareConfirmed = myShare?.payment_status === "confirmed";
   const isMySharePaid = myShare?.payment_status === "paid";
 
@@ -263,7 +264,7 @@ export function BillDetailModal({
                   const isPaid = share.payment_status === "paid";
                   const isBusy = processingShareId === share.id;
                   const days = share.days_present ?? cycleDays;
-                  const canEditDays = isShareOwner || isAdmin;
+                  const canEditDays = isShareOwner;
 
                   return (
                     <div
