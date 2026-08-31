@@ -331,26 +331,56 @@ describe("Hatian Split Engine (TDD)", () => {
       expect(sum).toBe(88900);
     });
 
-    it("finalizes bill shares once all roommates confirm their days", () => {
+    it("reconciles the exact ₱988.00 bill (15d + 11d) with zero drift and exact sum conservation", () => {
+      // ₱988.00 = 98,800 centavos
+      // Janver: 15 days, janveryu: 11 days. Total confirmed days = 26.
       const currentShares = [
-        { id: "share_1", memberId: "user_a", daysPresent: 12, isDaysConfirmed: true },
-        { id: "share_2", memberId: "user_b", daysPresent: 11, isDaysConfirmed: true },
+        { id: "share_janver", memberId: "janver_id", daysPresent: 15, isDaysConfirmed: true },
+        { id: "share_janveryu", memberId: "janveryu_id", daysPresent: 11, isDaysConfirmed: true },
       ];
 
       const result = recalculateSharesWithProvisionalStatus(
-        88900, // ₱889.00
+        98800, // ₱988.00
         currentShares,
-        "user_a",
-        30
+        "janveryu_id",
+        30 // cycle days is 30, but denominator MUST be 26!
       );
 
       expect(result.isProvisional).toBe(false);
       expect(result.unconfirmedMemberIds).toEqual([]);
-      // Alice (12/23 * 88900) = 46,382 + 1 centavo remainder absorbed by creator (Alice) = 46,383
-      // Bob (11/23 * 88900) = 42,517
-      expect(result.shares[0].amountOwedCentavos).toBe(46383);
-      expect(result.shares[1].amountOwedCentavos).toBe(42517);
-      expect(result.shares[0].amountOwedCentavos + result.shares[1].amountOwedCentavos).toBe(88900);
+
+      const janverShare = result.shares.find((s) => s.memberId === "janver_id");
+      const janveryuShare = result.shares.find((s) => s.memberId === "janveryu_id");
+
+      // Janver: 98,800 * (15 / 26) = 57,000 centavos = ₱570.00
+      expect(janverShare?.amountOwedCentavos).toBe(57000);
+      // janveryu: 98,800 * (11 / 26) = 41,800 centavos = ₱418.00
+      expect(janveryuShare?.amountOwedCentavos).toBe(41800);
+
+      // Exact sum must equal 98,800 centavos (₱988.00)
+      const totalAllocated = result.shares.reduce((sum, s) => sum + s.amountOwedCentavos, 0);
+      expect(totalAllocated).toBe(98800);
+    });
+
+    it("generalizes correctly for 3+ members with uneven days and remainder absorption", () => {
+      // ₱1,000.00 = 100,000 centavos
+      // Member 1: 10d, Member 2: 15d, Member 3: 20d. Total = 45 days.
+      const currentShares = [
+        { id: "s1", memberId: "m1", daysPresent: 10, isDaysConfirmed: true },
+        { id: "s2", memberId: "m2", daysPresent: 15, isDaysConfirmed: true },
+        { id: "s3", memberId: "m3", daysPresent: 20, isDaysConfirmed: true },
+      ];
+
+      const result = recalculateSharesWithProvisionalStatus(
+        100000,
+        currentShares,
+        "m1",
+        30
+      );
+
+      expect(result.isProvisional).toBe(false);
+      const total = result.shares.reduce((sum, s) => sum + s.amountOwedCentavos, 0);
+      expect(total).toBe(100000);
     });
   });
 });

@@ -458,16 +458,12 @@ CREATE POLICY "Bill creator or admin can insert shares"
     )
   );
 
-CREATE POLICY "Members can update own share or admin can update any"
+CREATE POLICY "Dorm members can update bill shares"
   ON public.bill_shares FOR UPDATE
   USING (
-    member_id IN (
-      SELECT id FROM public.dorm_members WHERE user_id = auth.uid()
-    )
-    OR bill_id IN (
+    bill_id IN (
       SELECT id FROM public.bills
-      WHERE created_by = auth.uid()
-        OR public.is_dorm_admin(dorm_id, auth.uid())
+      WHERE dorm_id IN (SELECT public.get_user_dorm_ids(auth.uid()))
     )
   );
 

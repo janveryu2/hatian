@@ -199,7 +199,64 @@ export function BillsProvider({ children }: { children: React.ReactNode }) {
       const myMemberId = myDormMember?.id;
 
       const enriched: BillWithDetails[] = billsData.map((b) => {
-        const billShares = sharesByBill.get(b.id) || [];
+        let billShares = sharesByBill.get(b.id) || [];
+
+        // Single Source of Truth Guarantee: Ensure shares sum to exactly b.amount_centavos
+        if (billShares.length > 0) {
+          const sumCentavos = billShares.reduce(
+            (sum, s) => sum + (s.amount_owed_centavos || 0),
+            0
+          );
+          if (sumCentavos !== b.amount_centavos) {
+            const cycleDays = daysBetween(
+              b.billing_period_start,
+              b.billing_period_end
+            );
+            const rawShares = billShares.map((s) => ({
+              id: s.id,
+              memberId: s.member_id,
+              daysPresent: s.days_present ?? null,
+              isDaysConfirmed: s.is_days_confirmed ?? false,
+            }));
+            const payerShare = billShares.find(
+              (s) => s.profile?.id === b.paid_by
+            );
+            const payerMemberId = payerShare ? payerShare.member_id : b.paid_by;
+
+            const { shares: healed } = recalculateSharesWithProvisionalStatus(
+              b.amount_centavos,
+              rawShares,
+              payerMemberId,
+              cycleDays
+            );
+            const healedMap = new Map(healed.map((h) => [h.id, h]));
+
+            billShares = billShares.map((s) => {
+              const h = healedMap.get(s.id);
+              if (!h) return s;
+              return {
+                ...s,
+                amount_owed_centavos: h.amountOwedCentavos,
+                days_present: h.daysPresent,
+                is_days_confirmed: h.isDaysConfirmed,
+              };
+            });
+
+            // Persist normalized shares to Supabase in background
+            healed.forEach((h) => {
+              supabase
+                .from("bill_shares")
+                .update({
+                  amount_owed_centavos: h.amountOwedCentavos,
+                  days_present: h.daysPresent,
+                  is_days_confirmed: h.isDaysConfirmed,
+                })
+                .eq("id", h.id)
+                .then();
+            });
+          }
+        }
+
         const userShare = myMemberId
           ? billShares.find((s) => s.member_id === myMemberId) || null
           : null;

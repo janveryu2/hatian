@@ -79,6 +79,33 @@ describe("Hatian Balance & Settle-Up Engine (TDD)", () => {
       expect(balances.get("user_c")).toBe(-100000);
     });
 
+    it("matches single source of truth for the ₱988.00 bill (15d + 11d)", () => {
+      // Water bill: Total = ₱988.00 (98,800 centavos)
+      // Fronted by janveryu ("user_a"). Shares: Janver ("user_b") ₱570.00 (57,000), janveryu ₱418.00 (41,800)
+      const bills: BillWithShares[] = [
+        {
+          id: "water_bill",
+          paidBy: "user_a",
+          amountCentavos: 98800,
+          shares: [
+            { memberId: "user_a", amountOwedCentavos: 41800 },
+            { memberId: "user_b", amountOwedCentavos: 57000 },
+          ],
+        },
+      ];
+
+      const balances = calculateNetBalances(members, bills, []);
+
+      // janveryu fronted 98,800 - own share 41,800 = +57,000 (Owed to You: ₱570.00)
+      expect(balances.get("user_a")).toBe(57000);
+      // Janver owes 57,000 (You Owe: ₱570.00)
+      expect(balances.get("user_b")).toBe(-57000);
+
+      // Verify that Owed to You exactly equals Janver's share
+      const owedToYou = balances.get("user_a")!;
+      expect(owedToYou).toBe(57000);
+    });
+
     it("ignores pending (unconfirmed) payments until receiver confirms", () => {
       const bills: BillWithShares[] = [
         {
