@@ -171,5 +171,9 @@ export interface TranslationDictionary {
     yesLeaveBtn: string;
     languageSettingTitle: string;
     languageSettingSub: string;
+    payRoommateBtn: string;
+    recordPaymentWith: string;
+    sentPendingRoommate: string;
+    roommateSentPayment: string;
   };
 }

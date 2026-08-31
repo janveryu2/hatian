@@ -171,5 +171,9 @@ export const en: TranslationDictionary = {
     yesLeaveBtn: "Yes, Leave Dorm",
     languageSettingTitle: "Language / Wika",
     languageSettingSub: "Choose your preferred interface language",
+    payRoommateBtn: "Pay {name} ({amount})",
+    recordPaymentWith: "Record Payment to {name}",
+    sentPendingRoommate: "Sent {amount} • Waiting on {name} to confirm",
+    roommateSentPayment: "{name} sent {amount}",
   },
 };

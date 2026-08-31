@@ -52,7 +52,9 @@ export function BillDetailModal({
     bill.billing_period_end
   );
 
-  const isPayer = bill.paid_by === currentUserId;
+  const isPayer =
+    bill.paid_by === currentUserId ||
+    bill.payerProfile?.id === currentUserId;
   const isCreator = bill.created_by === currentUserId;
   const canDelete = isAdmin || isCreator;
 
@@ -329,6 +331,9 @@ export function BillDetailModal({
               <div className="space-y-2.5">
                 {bill.shares.map((share) => {
                   const isShareOwner = share.profile?.id === currentUserId;
+                  const isSharePayer =
+                    bill.paid_by === share.profile?.id ||
+                    bill.payerProfile?.id === share.profile?.id;
                   const isConfirmed = share.payment_status === "confirmed";
                   const isPaid = share.payment_status === "paid";
                   const isAcknowledged = share.payment_status === "acknowledged";
@@ -377,9 +382,13 @@ export function BillDetailModal({
 
                         {/* Payment Status / Action */}
                         <div className="shrink-0">
-                          {isConfirmed ? (
+                          {isSharePayer ? (
                             <span className="px-2.5 py-1 rounded-full bg-accent-teal/15 text-accent-teal text-caption font-semibold">
-                              ✓ {t("bills.confirmedDaysBadge")}
+                              ✓ {t("bills.frontedBy")}
+                            </span>
+                          ) : isConfirmed ? (
+                            <span className="px-2.5 py-1 rounded-full bg-accent-teal/15 text-accent-teal text-caption font-semibold">
+                              ✓ {t("bills.settledBadge")}
                             </span>
                           ) : isPaid ? (
                             isPayer || isAdmin ? (
@@ -393,7 +402,7 @@ export function BillDetailModal({
                               </button>
                             ) : (
                               <span className="px-2.5 py-1 rounded-full bg-accent-sand/20 text-accent-sand text-caption font-medium">
-                                {t("bills.pendingStatus")}
+                                ⏳ {t("settle.pendingConfirmPill")}
                               </span>
                             )
                           ) : isAcknowledged ? (

@@ -10,7 +10,9 @@ import { CreateDormModal } from "@/components/dorm/CreateDormModal";
 import { JoinDormModal } from "@/components/dorm/JoinDormModal";
 import { InviteModal } from "@/components/dorm/InviteModal";
 import { MemberActionModal } from "@/components/dorm/MemberActionModal";
+import { RecordPaymentModal } from "@/components/settle/RecordPaymentModal";
 import { LoadingSkeletonHero, LoadingSkeletonCard } from "@/components/ui/LoadingSkeleton";
+import { formatCentavos } from "@/lib/utils/currency";
 import { useTranslation } from "@/lib/context/LanguageContext";
 import { LanguageToggle } from "@/components/ui/LanguageToggle";
 
@@ -29,7 +31,13 @@ const itemVariants = {
 
 export default function DormPage() {
   const { user } = useAuth();
-  const { netBalances } = useSettlement();
+  const {
+    netBalances,
+    simplifiedPlan,
+    payments,
+    recordPayment,
+    confirmPayment,
+  } = useSettlement();
   const {
     dorms,
     activeDorm,
@@ -56,8 +64,28 @@ export default function DormPage() {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [selectedMember, setSelectedMember] =
     useState<DormMemberWithProfile | null>(null);
+  const [isRecordPaymentOpen, setIsRecordPaymentOpen] = useState(false);
+  const [recordPaymentRecipientId, setRecordPaymentRecipientId] = useState("");
+  const [recordPaymentAmountPesos, setRecordPaymentAmountPesos] = useState("");
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
+
+  const myMember = members.find((m) => m.user_id === user?.id);
+  const myMemberId = myMember?.id || "";
+
+  const handleOpenRecordPayment = (
+    memberId: string,
+    suggestedAmountCentavos?: number
+  ) => {
+    setRecordPaymentRecipientId(memberId);
+    if (suggestedAmountCentavos && suggestedAmountCentavos > 0) {
+      setRecordPaymentAmountPesos((suggestedAmountCentavos / 100).toFixed(2));
+    } else {
+      setRecordPaymentAmountPesos("");
+    }
+    setSelectedMember(null);
+    setIsRecordPaymentOpen(true);
+  };
 
   if (isLoading) {
     return (
@@ -255,33 +283,44 @@ export default function DormPage() {
           <h2 className="text-heading-3 font-semibold text-text-primary">
             {t("dorm.activeMembersTitle", { count: activeMembers.length })}
           </h2>
-          {isAdmin && (
-            <span className="text-caption text-text-tertiary">
-              Tap a roommate to manage
-            </span>
-          )}
+          <span className="text-caption text-text-tertiary">
+            Tap a roommate to pay or manage
+          </span>
         </div>
 
         <div className="space-y-2.5">
           {members.map((member) => {
             const isMe = member.user_id === user?.id;
+            const memberBal = netBalances.get(member.id) || 0;
             const displayName =
               member.profile?.display_name ||
               member.profile?.email ||
               t("common.roommate");
 
+            const hasPendingIncoming = payments.some(
+              (p) =>
+                p.status === "pending" &&
+                p.from_member === member.id &&
+                p.to_member === myMemberId
+            );
+
+            const hasPendingOutgoing = payments.some(
+              (p) =>
+                p.status === "pending" &&
+                p.from_member === myMemberId &&
+                p.to_member === member.id
+            );
+
             return (
               <motion.div
                 key={member.id}
-                whileTap={isAdmin ? { scale: 0.98 } : undefined}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => {
-                  if (isAdmin) {
-                    setSelectedMember(member);
-                  }
+                  setSelectedMember(member);
                 }}
-                className={`card p-4 flex items-center justify-between gap-3 transition-colors ${
-                  isAdmin ? "cursor-pointer hover:border-accent-teal/40" : ""
-                } ${member.status === "inactive" ? "opacity-60" : ""}`}
+                className={`card p-4 flex items-center justify-between gap-3 transition-colors cursor-pointer hover:border-accent-teal/40 ${
+                  member.status === "inactive" ? "opacity-60" : ""
+                }`}
               >
                 <div className="flex items-center gap-3.5 min-w-0">
                   <div className="w-11 h-11 rounded-2xl bg-accent-teal/10 border border-accent-teal/20 flex items-center justify-center text-heading-3 font-semibold text-accent-teal uppercase overflow-hidden shrink-0">
@@ -315,6 +354,29 @@ export default function DormPage() {
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
+                  {hasPendingIncoming ? (
+                    <span className="px-2 py-0.5 rounded-full bg-accent-sand/20 text-accent-sand text-caption font-semibold animate-pulse">
+                      🔔 Confirm
+                    </span>
+                  ) : hasPendingOutgoing ? (
+                    <span className="px-2 py-0.5 rounded-full bg-accent-sand/15 text-accent-sand text-caption font-medium">
+                      ⏳ Pending
+                    </span>
+                  ) : memberBal !== 0 ? (
+                    <span
+                      className="text-caption font-mono font-bold"
+                      style={{
+                        color:
+                          memberBal > 0
+                            ? "var(--accent-teal)"
+                            : "var(--accent-coral)",
+                      }}
+                    >
+                      {memberBal > 0 ? "+" : ""}
+                      {formatCentavos(memberBal)}
+                    </span>
+                  ) : null}
+
                   <span
                     className={`px-2.5 py-1 rounded-lg text-caption font-semibold capitalize ${
                       member.role === "admin"
@@ -325,9 +387,7 @@ export default function DormPage() {
                     {member.role === "admin" ? t("dorm.adminBadge") : t("dorm.memberBadge")}
                   </span>
 
-                  {isAdmin && (
-                    <span className="text-text-tertiary text-body-sm">›</span>
-                  )}
+                  <span className="text-text-tertiary text-body-sm">›</span>
                 </div>
               </motion.div>
             );
@@ -414,12 +474,55 @@ export default function DormPage() {
         isOpen={!!selectedMember}
         member={selectedMember}
         currentUserId={user?.id || ""}
+        currentMemberId={myMemberId}
+        isCurrentUserAdmin={isAdmin}
         totalAdmins={members.filter((m) => m.role === "admin" && m.status === "active").length}
         memberBalanceCentavos={selectedMember ? netBalances.get(selectedMember.id) || 0 : 0}
+        suggestedDebtCentavos={
+          selectedMember
+            ? simplifiedPlan.find(
+                (p) => p.fromMember === myMemberId && p.toMember === selectedMember.id
+              )?.amountCentavos || 0
+            : 0
+        }
+        pendingIncomingPayment={
+          selectedMember
+            ? payments.find(
+                (p) =>
+                  p.status === "pending" &&
+                  p.from_member === selectedMember.id &&
+                  p.to_member === myMemberId
+              ) || null
+            : null
+        }
+        pendingOutgoingPayment={
+          selectedMember
+            ? payments.find(
+                (p) =>
+                  p.status === "pending" &&
+                  p.from_member === myMemberId &&
+                  p.to_member === selectedMember.id
+              ) || null
+            : null
+        }
         onClose={() => setSelectedMember(null)}
+        onOpenRecordPayment={handleOpenRecordPayment}
+        onConfirmReceipt={confirmPayment}
         onUpdateRole={updateMemberRole}
         onUpdateStatus={setMemberStatus}
         onRemove={removeMember}
+      />
+
+      <RecordPaymentModal
+        isOpen={isRecordPaymentOpen}
+        members={members}
+        currentMemberId={myMemberId}
+        defaultRecipientId={recordPaymentRecipientId}
+        defaultAmountPesos={recordPaymentAmountPesos}
+        onClose={() => setIsRecordPaymentOpen(false)}
+        onSubmit={async (toMemberId, amountCentavos, note) => {
+          await recordPayment(toMemberId, amountCentavos, note);
+        }}
       />
     </motion.div>
   );

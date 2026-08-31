@@ -5,22 +5,30 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SPRING } from "@/lib/utils/constants";
 import { formatCentavos } from "@/lib/utils/currency";
 import type { DormMemberWithProfile } from "@/lib/hooks/useDorm";
+import type { EnrichedPayment } from "@/lib/context/SettlementContext";
 import { useTranslation } from "@/lib/context/LanguageContext";
 
 interface MemberActionModalProps {
   isOpen: boolean;
   member: DormMemberWithProfile | null;
   currentUserId: string;
+  currentMemberId?: string;
+  isCurrentUserAdmin?: boolean;
   totalAdmins: number;
   memberBalanceCentavos?: number;
+  suggestedDebtCentavos?: number;
+  pendingIncomingPayment?: EnrichedPayment | null;
+  pendingOutgoingPayment?: EnrichedPayment | null;
   onClose: () => void;
-  onUpdateRole: (memberId: string, role: "admin" | "member") => Promise<void>;
-  onUpdateStatus: (
+  onOpenRecordPayment?: (memberId: string, suggestedAmountCentavos?: number) => void;
+  onConfirmReceipt?: (paymentId: string) => Promise<void>;
+  onUpdateRole?: (memberId: string, role: "admin" | "member") => Promise<void>;
+  onUpdateStatus?: (
     memberId: string,
     status: "active" | "inactive",
     moveOutDate?: string
   ) => Promise<void>;
-  onRemove: (
+  onRemove?: (
     memberId: string,
     strategy?: "redistribute_equally" | "absorb_by_admin" | "keep_on_record"
   ) => Promise<void>;
@@ -30,9 +38,15 @@ export function MemberActionModal({
   isOpen,
   member,
   currentUserId,
+  isCurrentUserAdmin = false,
   totalAdmins,
   memberBalanceCentavos = 0,
+  suggestedDebtCentavos = 0,
+  pendingIncomingPayment,
+  pendingOutgoingPayment,
   onClose,
+  onOpenRecordPayment,
+  onConfirmReceipt,
   onUpdateRole,
   onUpdateStatus,
   onRemove,
@@ -46,6 +60,7 @@ export function MemberActionModal({
     "redistribute_equally" | "absorb_by_admin" | "keep_on_record"
   >("redistribute_equally");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isConfirmingReceipt, setIsConfirmingReceipt] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!member) return null;
@@ -53,9 +68,26 @@ export function MemberActionModal({
   const isSelf = member.user_id === currentUserId;
   const isSoleAdmin = member.role === "admin" && totalAdmins <= 1;
   const displayName =
-    member.profile?.display_name || member.profile?.email || "Roommate";
+    member.profile?.display_name || member.profile?.email || t("common.roommate");
+
+  const handleConfirmReceipt = async (paymentId: string) => {
+    if (!onConfirmReceipt) return;
+    try {
+      setIsConfirmingReceipt(true);
+      setError(null);
+      await onConfirmReceipt(paymentId);
+      onClose();
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : "Failed to confirm payment"
+      );
+    } finally {
+      setIsConfirmingReceipt(false);
+    }
+  };
 
   const handleRoleToggle = async () => {
+    if (!onUpdateRole) return;
     if (isSoleAdmin) {
       setError(
         "A dorm must always have at least one Admin. Please promote another roommate before demoting yourself."
@@ -78,6 +110,7 @@ export function MemberActionModal({
   };
 
   const handleStatusToggle = async () => {
+    if (!onUpdateStatus) return;
     try {
       setIsProcessing(true);
       setError(null);
@@ -97,6 +130,7 @@ export function MemberActionModal({
   };
 
   const handleRemove = async () => {
+    if (!onRemove) return;
     if (isSoleAdmin) {
       setError(
         "Cannot remove the only Admin in this dorm. Please promote another member first."
@@ -162,12 +196,12 @@ export function MemberActionModal({
                     {displayName}
                     {isSelf && (
                       <span className="text-caption px-2 py-0.5 rounded-full bg-accent-teal/15 text-accent-teal">
-                        You
+                        {t("common.you")}
                       </span>
                     )}
                   </h2>
                   <p className="text-body-sm text-text-tertiary">
-                    {member.profile?.email || "Roommate"}
+                    {member.profile?.email || t("common.roommate")}
                   </p>
                 </div>
               </div>
@@ -193,7 +227,7 @@ export function MemberActionModal({
                   Role
                 </span>
                 <span className="text-body-md font-semibold text-text-primary capitalize">
-                  {member.role} {isSoleAdmin ? "(Sole Admin)" : ""}
+                  {member.role === "admin" ? t("dorm.adminBadge") : t("dorm.memberBadge")} {isSoleAdmin ? "(Sole Admin)" : ""}
                 </span>
               </div>
               <div className="p-3 rounded-xl bg-bg-surface border border-border-subtle">
@@ -217,92 +251,185 @@ export function MemberActionModal({
               </div>
             </div>
 
-            {!showRemoveConfirm ? (
-              <div className="space-y-3">
-                {/* Change Role Button */}
-                <button
-                  type="button"
-                  onClick={handleRoleToggle}
-                  disabled={isProcessing || isSoleAdmin}
-                  className="w-full p-4 rounded-2xl bg-bg-surface border border-border-subtle hover:border-accent-teal/50 transition-colors flex items-center justify-between text-left disabled:opacity-50"
-                >
-                  <div>
-                    <p className="text-body-md font-medium text-text-primary">
-                      {member.role === "admin"
-                        ? "Demote to Member"
-                        : "Promote to Admin"}
-                    </p>
-                    <p className="text-caption text-text-tertiary">
-                      {isSoleAdmin
-                        ? "Cannot demote sole admin (dorm must have ≥1 admin)"
-                        : member.role === "admin"
-                        ? "Revoke administrative privileges for this dorm"
-                        : "Allow managing bills, categories, and roommates"}
-                    </p>
-                  </div>
-                  <span className="text-heading-3">
-                    {member.role === "admin" ? "🛡️" : "⭐"}
-                  </span>
-                </button>
-
-                {/* Move Out / Inactive Status */}
-                <div className="p-4 rounded-2xl bg-bg-surface border border-border-subtle space-y-3">
-                  <div className="flex items-center justify-between">
+            {/* Settlement & Payment Actions */}
+            {!showRemoveConfirm && (
+              <div className="space-y-3 mb-4">
+                {/* 1. Pending Incoming Payment from this member needing confirmation */}
+                {pendingIncomingPayment && (
+                  <div className="p-4 rounded-2xl bg-accent-sand/15 border border-accent-sand/35 space-y-2.5">
                     <div>
-                      <p className="text-body-md font-medium text-text-primary">
-                        {member.status === "active"
-                          ? "Mark as Moved Out"
-                          : "Reactivate Member"}
+                      <span className="text-caption font-semibold uppercase text-accent-sand block mb-1">
+                        🔔 {t("settle.pendingIncomingTitle", { count: 1 })}
+                      </span>
+                      <p className="text-body-md font-bold text-text-primary">
+                        {t("dorm.roommateSentPayment", {
+                          name: displayName,
+                          amount: formatCentavos(pendingIncomingPayment.amount_centavos),
+                        })}
                       </p>
-                      <p className="text-caption text-text-tertiary">
-                        {member.status === "active"
-                          ? "Exclude from future bill cycles after move-out date"
-                          : "Include in upcoming bill splits again"}
-                      </p>
+                      {pendingIncomingPayment.note && (
+                        <p className="text-caption text-text-tertiary mt-0.5">
+                          Note: {pendingIncomingPayment.note}
+                        </p>
+                      )}
                     </div>
-                    <span className="text-heading-3">
-                      {member.status === "active" ? "🚪" : "👋"}
+                    <button
+                      type="button"
+                      onClick={() => handleConfirmReceipt(pendingIncomingPayment.id)}
+                      disabled={isConfirmingReceipt}
+                      className="w-full btn-primary py-2.5 text-body-sm font-semibold flex items-center justify-center gap-2 shadow-md shadow-accent-teal/20"
+                    >
+                      {isConfirmingReceipt ? (
+                        <>
+                          <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          {t("settle.confirmingBtn")}
+                        </>
+                      ) : (
+                        t("settle.confirmReceiptBtn")
+                      )}
+                    </button>
+                  </div>
+                )}
+
+                {/* 2. Pending Outgoing Payment to this member waiting on their confirmation */}
+                {pendingOutgoingPayment && (
+                  <div className="p-4 rounded-2xl bg-accent-sand/10 border border-accent-sand/25 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-body-sm font-medium text-text-primary">
+                        {t("dorm.sentPendingRoommate", {
+                          name: displayName,
+                          amount: formatCentavos(pendingOutgoingPayment.amount_centavos),
+                        })}
+                      </p>
+                      {pendingOutgoingPayment.note && (
+                        <p className="text-caption text-text-tertiary">
+                          Note: {pendingOutgoingPayment.note}
+                        </p>
+                      )}
+                    </div>
+                    <span className="px-2.5 py-1 rounded-full bg-accent-sand/20 text-accent-sand text-caption font-semibold shrink-0">
+                      ⏳ {t("settle.pendingConfirmPill")}
                     </span>
                   </div>
+                )}
 
-                  {member.status === "active" && (
-                    <div>
-                      <label className="block text-caption font-medium text-text-secondary mb-1">
-                        Move-Out Date
-                      </label>
-                      <input
-                        type="date"
-                        value={moveOutDate}
-                        onChange={(e) => setMoveOutDate(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl bg-bg-primary border border-border-subtle text-text-primary font-mono text-body-sm"
-                      />
-                    </div>
-                  )}
-
+                {/* 3. Record Payment Button to Settle With this Member */}
+                {!isSelf && onOpenRecordPayment && (
                   <button
                     type="button"
-                    onClick={handleStatusToggle}
-                    disabled={isProcessing}
-                    className="w-full btn-secondary py-2.5 text-body-sm"
+                    onClick={() =>
+                      onOpenRecordPayment(
+                        member.id,
+                        suggestedDebtCentavos > 0 ? suggestedDebtCentavos : undefined
+                      )
+                    }
+                    className="w-full btn-primary py-3.5 flex items-center justify-center gap-2 shadow-lg shadow-accent-teal/15 font-semibold text-body-md"
                   >
-                    {member.status === "active"
-                      ? "Confirm Move Out"
-                      : "Reactivate Member"}
-                  </button>
-                </div>
-
-                {/* Remove Member Trigger */}
-                {!isSelf && (
-                  <button
-                    type="button"
-                    onClick={() => setShowRemoveConfirm(true)}
-                    disabled={isSoleAdmin}
-                    className="w-full p-3 text-accent-terracotta text-body-sm font-medium hover:bg-accent-terracotta/10 rounded-xl transition-colors text-center disabled:opacity-40"
-                  >
-                    Remove from Dorm...
+                    <span>💸</span>
+                    <span>
+                      {suggestedDebtCentavos > 0
+                        ? t("dorm.payRoommateBtn", {
+                            name: displayName,
+                            amount: formatCentavos(suggestedDebtCentavos),
+                          })
+                        : t("dorm.recordPaymentWith", { name: displayName })}
+                    </span>
                   </button>
                 )}
               </div>
+            )}
+
+            {!showRemoveConfirm ? (
+              isCurrentUserAdmin && (
+                <div className="space-y-3 pt-3 border-t border-border-subtle">
+                  <span className="text-caption font-semibold uppercase text-text-tertiary block mb-1">
+                    Admin Controls
+                  </span>
+                  {/* Change Role Button */}
+                  <button
+                    type="button"
+                    onClick={handleRoleToggle}
+                    disabled={isProcessing || isSoleAdmin}
+                    className="w-full p-4 rounded-2xl bg-bg-surface border border-border-subtle hover:border-accent-teal/50 transition-colors flex items-center justify-between text-left disabled:opacity-50"
+                  >
+                    <div>
+                      <p className="text-body-md font-medium text-text-primary">
+                        {member.role === "admin"
+                          ? "Demote to Member"
+                          : "Promote to Admin"}
+                      </p>
+                      <p className="text-caption text-text-tertiary">
+                        {isSoleAdmin
+                          ? "Cannot demote sole admin (dorm must have ≥1 admin)"
+                          : member.role === "admin"
+                          ? "Revoke administrative privileges for this dorm"
+                          : "Allow managing bills, categories, and roommates"}
+                      </p>
+                    </div>
+                    <span className="text-heading-3">
+                      {member.role === "admin" ? "🛡️" : "⭐"}
+                    </span>
+                  </button>
+
+                  {/* Move Out / Inactive Status */}
+                  <div className="p-4 rounded-2xl bg-bg-surface border border-border-subtle space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-body-md font-medium text-text-primary">
+                          {member.status === "active"
+                            ? "Mark as Moved Out"
+                            : "Reactivate Member"}
+                        </p>
+                        <p className="text-caption text-text-tertiary">
+                          {member.status === "active"
+                            ? "Exclude from future bill cycles after move-out date"
+                            : "Include in upcoming bill splits again"}
+                        </p>
+                      </div>
+                      <span className="text-heading-3">
+                        {member.status === "active" ? "🚪" : "👋"}
+                      </span>
+                    </div>
+
+                    {member.status === "active" && (
+                      <div>
+                        <label className="block text-caption font-medium text-text-secondary mb-1">
+                          Move-Out Date
+                        </label>
+                        <input
+                          type="date"
+                          value={moveOutDate}
+                          onChange={(e) => setMoveOutDate(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl bg-bg-primary border border-border-subtle text-text-primary font-mono text-body-sm"
+                        />
+                      </div>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={handleStatusToggle}
+                      disabled={isProcessing}
+                      className="w-full btn-secondary py-2.5 text-body-sm"
+                    >
+                      {member.status === "active"
+                        ? "Confirm Move Out"
+                        : "Reactivate Member"}
+                    </button>
+                  </div>
+
+                  {/* Remove Member Trigger */}
+                  {!isSelf && (
+                    <button
+                      type="button"
+                      onClick={() => setShowRemoveConfirm(true)}
+                      disabled={isSoleAdmin}
+                      className="w-full p-3 text-accent-terracotta text-body-sm font-medium hover:bg-accent-terracotta/10 rounded-xl transition-colors text-center disabled:opacity-40"
+                    >
+                      Remove from Dorm...
+                    </button>
+                  )}
+                </div>
+              )
             ) : (
               /* Remove Member Confirmation & Debt Redistribution View */
               <div className="p-5 rounded-2xl bg-accent-terracotta/10 border border-accent-terracotta/30 space-y-4">

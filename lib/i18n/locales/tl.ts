@@ -171,5 +171,9 @@ export const tl: TranslationDictionary = {
     yesLeaveBtn: "Oo, Aalis na Ako",
     languageSettingTitle: "Wika / Language",
     languageSettingSub: "Piliin ang gusto mong wika sa app",
+    payRoommateBtn: "Magbayad kay {name} ({amount})",
+    recordPaymentWith: "Mag-record ng Bayad kay {name}",
+    sentPendingRoommate: "Na-send na ang {amount} • Hinihintay i-confirm ni {name}",
+    roommateSentPayment: "Nagpadala si {name} ng {amount}",
   },
 };
