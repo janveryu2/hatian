@@ -63,14 +63,14 @@ export function CreateDormModal({
             initial={{ y: "100%", opacity: 0.8 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: "100%", opacity: 0 }}
-            transition={SPRING.modal}
-            className="relative w-full max-w-lg bg-bg-card border border-border-subtle rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl z-10 max-h-[90vh] overflow-y-auto"
+            transition={SPRING.sheet}
+            className="relative w-full max-w-lg bg-bg-card border border-border-primary rounded-t-[28px] sm:rounded-3xl p-6 shadow-2xl z-10 max-h-[90vh] overflow-y-auto"
             style={{
               paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)",
             }}
           >
             {/* Sheet pull bar (mobile) */}
-            <div className="w-12 h-1.5 bg-border-subtle rounded-full mx-auto mb-4 sm:hidden" />
+            <div className="w-10 h-1 bg-border-primary rounded-full mx-auto mb-4 sm:hidden opacity-80" />
 
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-3">

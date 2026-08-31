@@ -150,13 +150,13 @@ export function BillDetailModal({
             initial={{ y: "100%", opacity: 0.8 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: "100%", opacity: 0 }}
-            transition={SPRING.modal}
-            className="relative w-full max-w-lg bg-bg-card border border-border-subtle rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl z-10 max-h-[92vh] overflow-y-auto flex flex-col"
+            transition={SPRING.sheet}
+            className="relative w-full max-w-lg bg-bg-card border border-border-primary rounded-t-[28px] sm:rounded-3xl p-6 shadow-2xl z-10 max-h-[92vh] overflow-y-auto flex flex-col"
             style={{
               paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)",
             }}
           >
-            <div className="w-12 h-1.5 bg-border-subtle rounded-full mx-auto mb-4 sm:hidden" />
+            <div className="w-10 h-1 bg-border-primary rounded-full mx-auto mb-4 sm:hidden opacity-80" />
 
             {/* Header */}
             <div className="flex items-start justify-between mb-3">

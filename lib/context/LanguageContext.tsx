@@ -59,7 +59,7 @@ function interpolate(template: string, params?: Record<string, string | number>)
 }
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguageState] = useState<Language>("en");
+  const [language, setLanguageState] = useState<Language>("tl");
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
@@ -67,6 +67,8 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       const saved = localStorage.getItem(LANGUAGE_STORAGE_KEY) as Language | null;
       if (saved === "en" || saved === "tl") {
         setLanguageState(saved);
+      } else {
+        setLanguageState("tl");
       }
       setIsInitialized(true);
     }

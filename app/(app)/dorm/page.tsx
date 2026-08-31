@@ -15,6 +15,7 @@ import { LoadingSkeletonHero, LoadingSkeletonCard } from "@/components/ui/Loadin
 import { formatCentavos } from "@/lib/utils/currency";
 import { useTranslation } from "@/lib/context/LanguageContext";
 import { LanguageToggle } from "@/components/ui/LanguageToggle";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -246,8 +247,9 @@ export default function DormPage() {
         </div>
       )}
 
-      {/* Language Preferences Card */}
-      <motion.div variants={itemVariants}>
+      {/* Preferences Section: Theme & Language */}
+      <motion.div variants={itemVariants} className="space-y-3">
+        <ThemeToggle variant="card" />
         <LanguageToggle variant="card" />
       </motion.div>
 

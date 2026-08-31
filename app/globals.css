@@ -6,161 +6,176 @@
    ============================================ */
 
 :root {
-  /* Base surfaces */
-  --bg-primary: #FAFAF7;
-  --bg-secondary: #F2F0EB;
-  --bg-tertiary: #E8E5DE;
+  /* Base surfaces — Refined Light Mode (Calm off-white) */
+  --bg-primary: #F8F9FA;
+  --bg-secondary: #F1F3F5;
+  --bg-tertiary: #E9ECEF;
+  --bg-surface: #F8F9FA;
   --bg-card: #FFFFFF;
   --bg-elevated: #FFFFFF;
 
-  /* Text */
-  --text-primary: #1A1A17;
-  --text-secondary: #6B6960;
-  --text-tertiary: #9C978A;
-  --text-inverse: #FAFAF7;
+  /* Text — High Contrast Crisp Charcoal */
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-tertiary: #94A3B8;
+  --text-inverse: #FFFFFF;
 
-  /* Accent — Teal (positive/settled) */
-  --accent-teal: #1A9E8F;
-  --accent-teal-soft: #E6F7F5;
-  --accent-teal-hover: #168578;
+  /* Accent — Teal (settled / owed to you) */
+  --accent-teal: #0D9488;
+  --accent-teal-soft: rgba(13, 148, 136, 0.10);
+  --accent-teal-hover: #0F766E;
+  --accent-sage: #0D9488;
+  --accent-sage-soft: rgba(13, 148, 136, 0.10);
 
-  /* Accent — Coral (owed/negative) */
-  --accent-coral: #E0614D;
-  --accent-coral-soft: #FDE8E4;
-  --accent-coral-hover: #C44E3C;
+  /* Accent — Coral (you owe / unpaid) */
+  --accent-coral: #E11D48;
+  --accent-coral-soft: rgba(225, 29, 72, 0.08);
+  --accent-coral-hover: #BE123C;
 
-  /* Accent — Amber (warning/pending) */
-  --accent-amber: #D4940A;
-  --accent-amber-soft: #FEF5E0;
+  /* Accent — Amber (pending / action required) */
+  --accent-amber: #D97706;
+  --accent-amber-soft: rgba(217, 119, 6, 0.10);
+  --accent-sand: #D97706;
+  --accent-terracotta: #EA580C;
 
-  /* Accent — Slate blue (info/neutral) */
-  --accent-blue: #4A7FB5;
-  --accent-blue-soft: #E8F0F8;
+  /* Accent — Slate blue (info) */
+  --accent-blue: #2563EB;
+  --accent-blue-soft: rgba(37, 99, 235, 0.08);
 
-  /* Borders & dividers */
-  --border-primary: #E0DDD5;
-  --border-secondary: #ECE9E2;
+  /* Borders & Dividers */
+  --border-primary: #E2E8F0;
+  --border-secondary: #F1F5F9;
+  --border-subtle: #E2E8F0;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(26, 26, 23, 0.04), 0 1px 2px rgba(26, 26, 23, 0.06);
-  --shadow-md: 0 4px 12px rgba(26, 26, 23, 0.06), 0 2px 4px rgba(26, 26, 23, 0.04);
-  --shadow-lg: 0 8px 28px rgba(26, 26, 23, 0.08), 0 4px 8px rgba(26, 26, 23, 0.04);
-  --shadow-sheet: 0 -8px 40px rgba(26, 26, 23, 0.12);
+  /* Shadows — Subtle iOS style */
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.03);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.05), 0 2px 4px rgba(15, 23, 42, 0.02);
+  --shadow-lg: 0 10px 25px rgba(15, 23, 42, 0.08), 0 4px 10px rgba(15, 23, 42, 0.03);
+  --shadow-sheet: 0 -10px 40px rgba(15, 23, 42, 0.12);
 
   /* Glass */
-  --glass-bg: rgba(255, 255, 255, 0.72);
-  --glass-border: rgba(255, 255, 255, 0.3);
+  --glass-bg: rgba(248, 249, 250, 0.85);
+  --glass-border: rgba(226, 232, 240, 0.8);
 
   /* Category colors */
-  --cat-internet: #4A7FB5;
-  --cat-water: #1A9E8F;
-  --cat-electricity: #D4940A;
-  --cat-rent: #9B6B9E;
-  --cat-other: #6B6960;
+  --cat-internet: #2563EB;
+  --cat-water: #0D9488;
+  --cat-electricity: #D97706;
+  --cat-rent: #9333EA;
+  --cat-other: #64748B;
 
   /* Radii */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
   --radius-full: 9999px;
 
   /* Tab bar height */
-  --tab-bar-height: 56px;
+  --tab-bar-height: 60px;
 }
 
 /* ============================================
-   DARK MODE
-   True dark, not gray-900
+   DARK MODE — Refined Slate Obsidian
    ============================================ */
 [data-theme="dark"] {
-  --bg-primary: #0A0A0F;
-  --bg-secondary: #141419;
-  --bg-tertiary: #1E1E26;
-  --bg-card: #18181F;
-  --bg-elevated: #1E1E26;
+  --bg-primary: #080C14;
+  --bg-secondary: #0E1524;
+  --bg-tertiary: #162035;
+  --bg-surface: #0E1524;
+  --bg-card: #121A2D;
+  --bg-elevated: #18233C;
 
-  --text-primary: #EDEDEB;
-  --text-secondary: #9C978A;
-  --text-tertiary: #6B6960;
-  --text-inverse: #1A1A17;
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --text-tertiary: #64748B;
+  --text-inverse: #080C14;
 
-  --accent-teal: #2DBFAD;
-  --accent-teal-soft: rgba(45, 191, 173, 0.12);
-  --accent-teal-hover: #24A696;
+  --accent-teal: #14B8A6;
+  --accent-teal-soft: rgba(20, 184, 166, 0.14);
+  --accent-teal-hover: #2DD4BF;
+  --accent-sage: #14B8A6;
+  --accent-sage-soft: rgba(20, 184, 166, 0.14);
 
-  --accent-coral: #F07A69;
-  --accent-coral-soft: rgba(240, 122, 105, 0.12);
-  --accent-coral-hover: #E0614D;
+  --accent-coral: #FB7185;
+  --accent-coral-soft: rgba(251, 113, 133, 0.14);
+  --accent-coral-hover: #F43F5E;
 
-  --accent-amber: #EAA820;
-  --accent-amber-soft: rgba(234, 168, 32, 0.12);
+  --accent-amber: #FBBF24;
+  --accent-amber-soft: rgba(251, 191, 36, 0.14);
+  --accent-sand: #FBBF24;
+  --accent-terracotta: #FB923C;
 
-  --accent-blue: #6B9FD4;
-  --accent-blue-soft: rgba(107, 159, 212, 0.12);
+  --accent-blue: #60A5FA;
+  --accent-blue-soft: rgba(96, 165, 250, 0.14);
 
-  --border-primary: #2A2A33;
-  --border-secondary: #1E1E26;
+  --border-primary: rgba(255, 255, 255, 0.08);
+  --border-secondary: rgba(255, 255, 255, 0.04);
+  --border-subtle: rgba(255, 255, 255, 0.08);
 
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25), 0 2px 4px rgba(0, 0, 0, 0.2);
-  --shadow-lg: 0 8px 28px rgba(0, 0, 0, 0.35), 0 4px 8px rgba(0, 0, 0, 0.2);
-  --shadow-sheet: 0 -8px 40px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.25);
+  --shadow-sheet: 0 -12px 48px rgba(0, 0, 0, 0.6);
 
-  --glass-bg: rgba(10, 10, 15, 0.72);
-  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-bg: rgba(8, 12, 20, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.08);
 
-  --cat-internet: #6B9FD4;
-  --cat-water: #2DBFAD;
-  --cat-electricity: #EAA820;
-  --cat-rent: #B98ABD;
-  --cat-other: #9C978A;
+  --cat-internet: #60A5FA;
+  --cat-water: #14B8A6;
+  --cat-electricity: #FBBF24;
+  --cat-rent: #C084FC;
+  --cat-other: #94A3B8;
 }
 
-/* Also support system preference */
+/* Also support system preference when no explicit data-theme is set */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg-primary: #0A0A0F;
-    --bg-secondary: #141419;
-    --bg-tertiary: #1E1E26;
-    --bg-card: #18181F;
-    --bg-elevated: #1E1E26;
+    --bg-primary: #080C14;
+    --bg-secondary: #0E1524;
+    --bg-tertiary: #162035;
+    --bg-surface: #0E1524;
+    --bg-card: #121A2D;
+    --bg-elevated: #18233C;
 
-    --text-primary: #EDEDEB;
-    --text-secondary: #9C978A;
-    --text-tertiary: #6B6960;
-    --text-inverse: #1A1A17;
+    --text-primary: #F8FAFC;
+    --text-secondary: #94A3B8;
+    --text-tertiary: #64748B;
+    --text-inverse: #080C14;
 
-    --accent-teal: #2DBFAD;
-    --accent-teal-soft: rgba(45, 191, 173, 0.12);
-    --accent-teal-hover: #24A696;
+    --accent-teal: #14B8A6;
+    --accent-teal-soft: rgba(20, 184, 166, 0.14);
+    --accent-teal-hover: #2DD4BF;
 
-    --accent-coral: #F07A69;
-    --accent-coral-soft: rgba(240, 122, 105, 0.12);
-    --accent-coral-hover: #E0614D;
+    --accent-coral: #FB7185;
+    --accent-coral-soft: rgba(251, 113, 133, 0.14);
+    --accent-coral-hover: #F43F5E;
 
-    --accent-amber: #EAA820;
-    --accent-amber-soft: rgba(234, 168, 32, 0.12);
+    --accent-amber: #FBBF24;
+    --accent-amber-soft: rgba(251, 191, 36, 0.14);
+    --accent-sand: #FBBF24;
+    --accent-terracotta: #FB923C;
 
-    --accent-blue: #6B9FD4;
-    --accent-blue-soft: rgba(107, 159, 212, 0.12);
+    --accent-blue: #60A5FA;
+    --accent-blue-soft: rgba(96, 165, 250, 0.14);
 
-    --border-primary: #2A2A33;
-    --border-secondary: #1E1E26;
+    --border-primary: rgba(255, 255, 255, 0.08);
+    --border-secondary: rgba(255, 255, 255, 0.04);
+    --border-subtle: rgba(255, 255, 255, 0.08);
 
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25), 0 2px 4px rgba(0, 0, 0, 0.2);
-    --shadow-lg: 0 8px 28px rgba(0, 0, 0, 0.35), 0 4px 8px rgba(0, 0, 0, 0.2);
-    --shadow-sheet: 0 -8px 40px rgba(0, 0, 0, 0.4);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.25);
+    --shadow-sheet: 0 -12px 48px rgba(0, 0, 0, 0.6);
 
-    --glass-bg: rgba(10, 10, 15, 0.72);
-    --glass-border: rgba(255, 255, 255, 0.06);
+    --glass-bg: rgba(8, 12, 20, 0.85);
+    --glass-border: rgba(255, 255, 255, 0.08);
 
-    --cat-internet: #6B9FD4;
-    --cat-water: #2DBFAD;
-    --cat-electricity: #EAA820;
-    --cat-rent: #B98ABD;
-    --cat-other: #9C978A;
+    --cat-internet: #60A5FA;
+    --cat-water: #14B8A6;
+    --cat-electricity: #FBBF24;
+    --cat-rent: #C084FC;
+    --cat-other: #94A3B8;
   }
 }
 
@@ -181,6 +196,7 @@
 
   --color-accent-teal: var(--accent-teal);
   --color-accent-teal-soft: var(--accent-teal-soft);
+  --color-accent-sage: var(--accent-sage);
   --color-accent-coral: var(--accent-coral);
   --color-accent-coral-soft: var(--accent-coral-soft);
   --color-accent-amber: var(--accent-amber);
@@ -332,25 +348,28 @@ body {
    ============================================ */
 .card {
   background: var(--bg-card);
-  border: 1px solid var(--border-secondary);
+  border: 1px solid var(--border-primary);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .card-elevated {
   background: var(--bg-elevated);
-  border: 1px solid var(--border-secondary);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
 }
 
 /* ============================================
-   SHEET MODAL
+   SHEET MODAL — iOS Weighted Sheet Style
    ============================================ */
 .sheet-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   z-index: 50;
 }
 
@@ -360,19 +379,21 @@ body {
   left: 0;
   right: 0;
   background: var(--bg-card);
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  border-radius: 28px 28px 0 0;
   box-shadow: var(--shadow-sheet);
+  border-top: 1px solid var(--border-primary);
   z-index: 51;
   max-height: 92vh;
   padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
 }
 
 .sheet-handle {
-  width: 36px;
-  height: 4px;
+  width: 40px;
+  height: 5px;
   background: var(--border-primary);
+  opacity: 0.8;
   border-radius: var(--radius-full);
-  margin: 8px auto 0;
+  margin: 10px auto 0;
 }
 
 /* ============================================
@@ -405,21 +426,23 @@ body {
   font-weight: 600;
   font-size: 0.9375rem;
   padding: 12px 24px;
-  transition: background 0.15s ease;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   border: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.2);
 }
 
 .btn-primary:hover {
   background: var(--accent-teal-hover);
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.28);
 }
 
 .btn-primary:active {
-  transform: scale(0.98);
+  transform: scale(0.97);
 }
 
 .btn-secondary {
@@ -429,7 +452,7 @@ body {
   font-weight: 600;
   font-size: 0.9375rem;
   padding: 12px 24px;
-  transition: background 0.15s ease;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   border: 1px solid var(--border-primary);
   display: inline-flex;
@@ -442,6 +465,10 @@ body {
   background: var(--border-primary);
 }
 
+.btn-secondary:active {
+  transform: scale(0.97);
+}
+
 .btn-ghost {
   background: transparent;
   color: var(--text-secondary);
@@ -449,7 +476,7 @@ body {
   font-weight: 500;
   font-size: 0.9375rem;
   padding: 12px 24px;
-  transition: all 0.15s ease;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   border: none;
   display: inline-flex;
@@ -461,6 +488,10 @@ body {
 .btn-ghost:hover {
   background: var(--bg-tertiary);
   color: var(--text-primary);
+}
+
+.btn-ghost:active {
+  transform: scale(0.97);
 }
 
 /* ============================================

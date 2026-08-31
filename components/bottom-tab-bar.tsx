@@ -128,19 +128,19 @@ export function BottomTabBar() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40 glass"
+      className="fixed bottom-0 left-0 right-0 z-40 glass border-t border-border-primary"
       style={{
-        paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 4px)",
+        paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 6px)",
       }}
     >
-      <div className="relative flex items-center justify-around h-14 max-w-lg mx-auto">
+      <div className="relative flex items-center justify-around h-14 max-w-lg mx-auto px-2">
         {/* Animated active indicator */}
         {activeIndex >= 0 && (
           <motion.div
-            className="absolute top-0 h-[3px] rounded-b-full"
+            className="absolute top-0 h-[2.5px] rounded-full"
             style={{
-              width: `${100 / tabs.length}%`,
-              left: `${(activeIndex * 100) / tabs.length}%`,
+              width: `${(100 / tabs.length) * 0.5}%`,
+              left: `${(activeIndex * 100) / tabs.length + (100 / tabs.length) * 0.25}%`,
               background: "var(--accent-teal)",
             }}
             layoutId="tab-indicator"
@@ -154,29 +154,37 @@ export function BottomTabBar() {
             <Link
               key={tab.href}
               href={tab.href}
-              className="flex flex-col items-center justify-center gap-0.5 flex-1 py-1 relative"
+              className="flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 relative select-none"
             >
               <motion.div
-                animate={{
-                  color: isActive
-                    ? "var(--accent-teal)"
-                    : "var(--text-tertiary)",
-                }}
-                transition={{ duration: 0.2 }}
+                whileTap={{ scale: 0.88 }}
+                transition={SPRING.micro}
+                className="flex flex-col items-center gap-0.5"
               >
-                {tab.icon(isActive)}
+                <motion.div
+                  animate={{
+                    color: isActive
+                      ? "var(--accent-teal)"
+                      : "var(--text-tertiary)",
+                    scale: isActive ? 1.05 : 1,
+                  }}
+                  transition={SPRING.tab}
+                >
+                  {tab.icon(isActive)}
+                </motion.div>
+                <motion.span
+                  className="text-[11px] font-semibold tracking-tight"
+                  animate={{
+                    color: isActive
+                      ? "var(--accent-teal)"
+                      : "var(--text-tertiary)",
+                    opacity: isActive ? 1 : 0.8,
+                  }}
+                  transition={{ duration: 0.15 }}
+                >
+                  {tab.label}
+                </motion.span>
               </motion.div>
-              <motion.span
-                className="text-[10px] font-medium"
-                animate={{
-                  color: isActive
-                    ? "var(--accent-teal)"
-                    : "var(--text-tertiary)",
-                }}
-                transition={{ duration: 0.2 }}
-              >
-                {tab.label}
-              </motion.span>
             </Link>
           );
         })}

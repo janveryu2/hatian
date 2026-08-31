@@ -28,26 +28,28 @@ export const SPLIT_METHOD_LABELS: Record<string, string> = {
   prorated_by_days: "By Days Present",
 };
 
-/** Spring animation presets */
+/** Spring animation presets — Tuned for iOS-grade physics */
 export const SPRING = {
-  /** For sheet modals — snappy with slight overshoot */
-  sheet: { type: "spring" as const, damping: 30, stiffness: 300 },
-  /** For standard modals */
-  modal: { type: "spring" as const, damping: 30, stiffness: 300 },
-  /** For tab transitions — smooth and natural */
-  tab: { type: "spring" as const, damping: 25, stiffness: 200 },
-  /** For micro-interactions — quick and subtle */
-  micro: { type: "spring" as const, damping: 20, stiffness: 400 },
+  /** For sheet modals — weighted decelerating iOS sheet entry */
+  sheet: { type: "spring" as const, damping: 32, stiffness: 340, mass: 0.85 },
+  /** For standard center modals */
+  modal: { type: "spring" as const, damping: 28, stiffness: 320, mass: 0.8 },
+  /** For tab transitions — tight, smooth crossfade & slide */
+  tab: { type: "spring" as const, damping: 30, stiffness: 280, mass: 0.7 },
+  /** For micro-interactions — quick, responsive */
+  micro: { type: "spring" as const, damping: 24, stiffness: 450 },
   /** For subtle spring */
-  subtle: { type: "spring" as const, damping: 25, stiffness: 250 },
-  /** For page content — gentle entry */
-  page: { type: "spring" as const, damping: 28, stiffness: 180 },
-  /** For list items — bouncy stagger */
-  list: { type: "spring" as const, damping: 22, stiffness: 250 },
+  subtle: { type: "spring" as const, damping: 26, stiffness: 260 },
+  /** For page content — calm, gentle entry */
+  page: { type: "spring" as const, damping: 30, stiffness: 240, mass: 0.8 },
+  /** For list items — crisp, non-wobbly stagger */
+  list: { type: "spring" as const, damping: 28, stiffness: 300, mass: 0.7 },
+  /** Tactile button tap feedback */
+  tap: { scale: 0.97, transition: { type: "spring" as const, damping: 20, stiffness: 500 } },
 };
 
-/** Stagger delay for list animations */
-export const STAGGER_DELAY = 0.05;
+/** Stagger delay for list item entrances */
+export const STAGGER_DELAY = 0.035;
 
 /** Invite code config */
 export const INVITE_CODE_LENGTH = 6;
