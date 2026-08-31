@@ -139,6 +139,8 @@ CREATE TABLE public.bill_shares (
   amount_owed_centavos BIGINT NOT NULL CHECK (amount_owed_centavos >= 0),
   amount_paid_centavos BIGINT NOT NULL DEFAULT 0 CHECK (amount_paid_centavos >= 0),
   payment_status TEXT NOT NULL DEFAULT 'unpaid' CHECK (payment_status IN ('unpaid', 'partial', 'paid', 'confirmed')),
+  days_present INT,
+  is_days_confirmed BOOLEAN NOT NULL DEFAULT FALSE,
   paid_at TIMESTAMPTZ,
   confirmed_at TIMESTAMPTZ,
   confirmed_by UUID REFERENCES public.profiles(id),

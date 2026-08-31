@@ -88,7 +88,8 @@ export function CreateBillModal({
 
   // Total centavos
   const totalCentavos = useMemo(() => {
-    const parsed = parseFloat(amountPesos);
+    const cleanStr = amountPesos.replace(/[^0-9.]/g, "");
+    const parsed = parseFloat(cleanStr);
     return isNaN(parsed) || parsed <= 0 ? 0 : pesosToCentavos(parsed);
   }, [amountPesos]);
 

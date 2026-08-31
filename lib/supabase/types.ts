@@ -237,6 +237,8 @@ export interface Database {
           amount_owed_centavos: number;
           amount_paid_centavos: number;
           payment_status: "unpaid" | "partial" | "paid" | "confirmed";
+          days_present?: number | null;
+          is_days_confirmed?: boolean;
           paid_at: string | null;
           confirmed_at: string | null;
           confirmed_by: string | null;
@@ -248,6 +250,8 @@ export interface Database {
           amount_owed_centavos: number;
           amount_paid_centavos?: number;
           payment_status?: "unpaid" | "partial" | "paid" | "confirmed";
+          days_present?: number | null;
+          is_days_confirmed?: boolean;
           paid_at?: string | null;
           confirmed_at?: string | null;
           confirmed_by?: string | null;
@@ -259,6 +263,8 @@ export interface Database {
           amount_owed_centavos?: number;
           amount_paid_centavos?: number;
           payment_status?: "unpaid" | "partial" | "paid" | "confirmed";
+          days_present?: number | null;
+          is_days_confirmed?: boolean;
           paid_at?: string | null;
           confirmed_at?: string | null;
           confirmed_by?: string | null;

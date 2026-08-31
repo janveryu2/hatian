@@ -18,7 +18,12 @@ import type {
   BillCategory,
   Profile,
 } from "@/lib/supabase/types";
-import { calculateSplit, type SplitOptions } from "@/lib/engine/split";
+import {
+  calculateSplit,
+  daysBetween,
+  recalculateSharesFromDaysPresent,
+  type SplitOptions,
+} from "@/lib/engine/split";
 
 export interface BillShareWithProfile extends BillShare {
   profile: Profile | null;
@@ -55,6 +60,11 @@ export interface BillsContextType {
       "totalAmountCentavos" | "creatorId" | "billingPeriodStart" | "billingPeriodEnd"
     >
   ) => Promise<Bill>;
+  updateShareDays: (
+    billId: string,
+    shareId: string,
+    newDays: number
+  ) => Promise<void>;
   markSharePaid: (shareId: string) => Promise<void>;
   confirmSharePaid: (shareId: string) => Promise<void>;
   deleteBill: (billId: string) => Promise<void>;
@@ -323,12 +333,19 @@ export function BillsProvider({ children }: { children: React.ReactNode }) {
       const userToMemberMap = new Map<string, string>();
       dormMembers?.forEach((dm) => userToMemberMap.set(dm.user_id, dm.id));
 
+      const defaultCycleDays = daysBetween(
+        billData.billingPeriodStart,
+        billData.billingPeriodEnd
+      );
+
       const shareInserts = calculation.shares
         .map((share) => {
           const memberId = userToMemberMap.get(share.memberId);
           if (!memberId) return null;
 
           const isPayer = share.memberId === billData.paidBy;
+          const memberDays =
+            splitConfig.daysPresent?.[share.memberId] ?? defaultCycleDays;
 
           return {
             bill_id: newBill.id,
@@ -338,6 +355,8 @@ export function BillsProvider({ children }: { children: React.ReactNode }) {
             payment_status: isPayer
               ? ("confirmed" as const)
               : ("unpaid" as const),
+            days_present: memberDays,
+            is_days_confirmed: false,
             paid_at: isPayer ? new Date().toISOString() : null,
             confirmed_at: isPayer ? new Date().toISOString() : null,
           };
@@ -354,6 +373,76 @@ export function BillsProvider({ children }: { children: React.ReactNode }) {
       return newBill;
     },
     [getClient, user, activeDorm, loadBills]
+  );
+
+  const updateShareDays = useCallback(
+    async (billId: string, shareId: string, newDays: number) => {
+      const supabase = getClient();
+      if (!supabase) return;
+
+      const targetBill = bills.find((b) => b.id === billId);
+      if (!targetBill) return;
+
+      const cycleDays = daysBetween(
+        targetBill.billing_period_start,
+        targetBill.billing_period_end
+      );
+
+      const rawShares = targetBill.shares.map((s) => ({
+        id: s.id,
+        memberId: s.member_id,
+        daysPresent:
+          s.id === shareId
+            ? newDays
+            : typeof s.days_present === "number"
+            ? s.days_present
+            : cycleDays,
+      }));
+
+      const recalculated = recalculateSharesFromDaysPresent(
+        targetBill.amount_centavos,
+        rawShares,
+        targetBill.paid_by
+      );
+
+      const recalMap = new Map(recalculated.map((r) => [r.id, r]));
+
+      // Optimistically update local state immediately
+      setBills((prev) =>
+        prev.map((b) => {
+          if (b.id !== billId) return b;
+          return {
+            ...b,
+            shares: b.shares.map((s) => {
+              const r = recalMap.get(s.id);
+              if (!r) return s;
+              return {
+                ...s,
+                days_present: r.daysPresent,
+                is_days_confirmed:
+                  s.id === shareId ? true : s.is_days_confirmed ?? false,
+                amount_owed_centavos: r.amountOwedCentavos,
+              };
+            }),
+          };
+        })
+      );
+
+      // Persist recalculated shares to Supabase
+      const updates = recalculated.map((r) =>
+        supabase
+          .from("bill_shares")
+          .update({
+            days_present: r.daysPresent,
+            is_days_confirmed: r.id === shareId ? true : undefined,
+            amount_owed_centavos: r.amountOwedCentavos,
+          })
+          .eq("id", r.id)
+      );
+
+      await Promise.all(updates);
+    },
+    [getClient, bills]
   );
 
   const markSharePaid = useCallback(
@@ -442,6 +531,7 @@ export function BillsProvider({ children }: { children: React.ReactNode }) {
       isLoading,
       error,
       createBill,
+      updateShareDays,
       markSharePaid,
       confirmSharePaid,
       deleteBill,
@@ -454,6 +544,7 @@ export function BillsProvider({ children }: { children: React.ReactNode }) {
       isLoading,
       error,
       createBill,
+      updateShareDays,
       markSharePaid,
       confirmSharePaid,
       deleteBill,

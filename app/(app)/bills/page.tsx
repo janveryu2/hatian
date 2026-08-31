@@ -40,6 +40,7 @@ export default function BillsPage() {
     isLoading,
     error,
     createBill,
+    updateShareDays,
     markSharePaid,
     confirmSharePaid,
     deleteBill,
@@ -48,9 +49,12 @@ export default function BillsPage() {
 
   const [selectedFilter, setSelectedFilter] = useState<string>("all");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [selectedBill, setSelectedBill] = useState<BillWithDetails | null>(
-    null
-  );
+  const [selectedBillId, setSelectedBillId] = useState<string | null>(null);
+
+  const selectedBill = useMemo(() => {
+    if (!selectedBillId) return null;
+    return bills.find((b) => b.id === selectedBillId) || null;
+  }, [bills, selectedBillId]);
 
   // Filter bills based on selected tab / category
   const filteredBills = useMemo(() => {
@@ -223,7 +227,7 @@ export default function BillsPage() {
                   <motion.div
                     key={bill.id}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => setSelectedBill(bill)}
+                    onClick={() => setSelectedBillId(bill.id)}
                     className="card p-4 flex flex-col gap-3 cursor-pointer hover:border-accent-teal/40 transition-colors"
                   >
                     {/* Top row: Category icon, name, cycle, and total amount */}
@@ -320,7 +324,8 @@ export default function BillsPage() {
         bill={selectedBill}
         currentUserId={user?.id || ""}
         isAdmin={isAdmin}
-        onClose={() => setSelectedBill(null)}
+        onClose={() => setSelectedBillId(null)}
+        onUpdateDays={updateShareDays}
         onMarkPaid={markSharePaid}
         onConfirmPaid={confirmSharePaid}
         onDeleteBill={deleteBill}

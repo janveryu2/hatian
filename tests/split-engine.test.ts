@@ -5,6 +5,7 @@ import {
   calculateCustomSplit,
   calculateProratedSplit,
   calculateSplit,
+  recalculateSharesFromDaysPresent,
   type SplitParticipant,
 } from "@/lib/engine/split";
 
@@ -257,6 +258,37 @@ describe("Hatian Split Engine (TDD)", () => {
 
       expect(result.shares.length).toBe(3);
       expect(result.totalCentavos).toBe(100000);
+    });
+  });
+
+  describe("Live Share Recalculation on Days Change (Self-Entry TDD)", () => {
+    it("recalculates all roommate shares live when any member edits their days present", () => {
+      // ₱562.00 = 56,200 centavos
+      // Bill with 3 members: Alice, Bob, Charlie
+      const currentShares = [
+        { id: "share_1", memberId: "user_a", daysPresent: 15 },
+        { id: "share_2", memberId: "user_b", daysPresent: 30 },
+        { id: "share_3", memberId: "user_c", daysPresent: 30 },
+      ];
+
+      const updated = recalculateSharesFromDaysPresent(
+        56200,
+        currentShares,
+        "user_a"
+      );
+
+      // Total days = 75.
+      // Alice (15/75) = 11,240 centavos (₱112.40)
+      // Bob (30/75) = 22,480 centavos (₱224.80)
+      // Charlie (30/75) = 22,480 centavos (₱224.80)
+      expect(updated).toEqual([
+        { id: "share_1", memberId: "user_a", amountOwedCentavos: 11240, daysPresent: 15 },
+        { id: "share_2", memberId: "user_b", amountOwedCentavos: 22480, daysPresent: 30 },
+        { id: "share_3", memberId: "user_c", amountOwedCentavos: 22480, daysPresent: 30 },
+      ]);
+
+      const sum = updated.reduce((acc, s) => acc + s.amountOwedCentavos, 0);
+      expect(sum).toBe(56200);
     });
   });
 });

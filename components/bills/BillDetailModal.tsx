@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SPRING } from "@/lib/utils/constants";
 import { formatCentavos } from "@/lib/utils/currency";
+import { daysBetween } from "@/lib/engine/split";
 import type { BillWithDetails } from "@/lib/hooks/useBills";
 
 interface BillDetailModalProps {
@@ -12,6 +13,11 @@ interface BillDetailModalProps {
   currentUserId: string;
   isAdmin: boolean;
   onClose: () => void;
+  onUpdateDays?: (
+    billId: string,
+    shareId: string,
+    newDays: number
+  ) => Promise<void>;
   onMarkPaid: (shareId: string) => Promise<void>;
   onConfirmPaid: (shareId: string) => Promise<void>;
   onDeleteBill: (billId: string) => Promise<void>;
@@ -23,6 +29,7 @@ export function BillDetailModal({
   currentUserId,
   isAdmin,
   onClose,
+  onUpdateDays,
   onMarkPaid,
   onConfirmPaid,
   onDeleteBill,
@@ -36,6 +43,11 @@ export function BillDetailModal({
 
   if (!bill) return null;
 
+  const cycleDays = daysBetween(
+    bill.billing_period_start,
+    bill.billing_period_end
+  );
+
   const isPayer = bill.paid_by === currentUserId;
   const isCreator = bill.created_by === currentUserId;
   const canDelete = isAdmin || isCreator;
@@ -44,7 +56,20 @@ export function BillDetailModal({
   const myShare = bill.userShare;
   const isMyShareConfirmed = myShare?.payment_status === "confirmed";
   const isMySharePaid = myShare?.payment_status === "paid";
-  const isMyShareUnpaid = myShare && !isMySharePaid && !isMyShareConfirmed;
+
+  const handleDayChange = async (shareId: string, currentDays: number, delta: number) => {
+    if (!onUpdateDays) return;
+    const nextDays = Math.max(0, Math.min(cycleDays, currentDays + delta));
+    try {
+      setProcessingShareId(shareId);
+      setError(null);
+      await onUpdateDays(bill.id, shareId, nextDays);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to update days");
+    } finally {
+      setProcessingShareId(null);
+    }
+  };
 
   const handleMarkPaid = async (shareId: string) => {
     try {
@@ -121,7 +146,7 @@ export function BillDetailModal({
                     {bill.category?.name || "Bill"}
                   </h2>
                   <p className="text-body-sm text-text-tertiary">
-                    {bill.billing_period_start} → {bill.billing_period_end}
+                    {bill.billing_period_start} → {bill.billing_period_end} ({cycleDays} days)
                   </p>
                 </div>
               </div>
@@ -158,6 +183,9 @@ export function BillDetailModal({
                     </span>
                     <p className="text-heading-2 font-mono font-bold text-text-primary">
                       {formatCentavos(myShare.amount_owed_centavos)}
+                    </p>
+                    <p className="text-caption text-text-tertiary mt-0.5">
+                      Based on {myShare.days_present ?? cycleDays} of {cycleDays} days present
                     </p>
                   </div>
 
@@ -215,85 +243,147 @@ export function BillDetailModal({
               </div>
             </div>
 
-            {/* Roommate Shares Breakdown */}
+            {/* Roommate Shares Breakdown with Self-Entry Days Stepper */}
             <div className="space-y-3 mb-6 flex-1">
               <div className="flex items-center justify-between">
-                <h3 className="text-caption font-semibold uppercase text-text-secondary">
-                  Roommate Breakdown ({bill.shares.length})
-                </h3>
-                <span className="text-caption text-text-tertiary">
-                  Auto-prorated by days
-                </span>
+                <div>
+                  <h3 className="text-caption font-semibold uppercase text-text-secondary">
+                    Roommate Days & Shares ({bill.shares.length})
+                  </h3>
+                  <p className="text-caption text-text-tertiary">
+                    Enter your days present — all shares recalculate live
+                  </p>
+                </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {bill.shares.map((share) => {
                   const isShareOwner = share.profile?.id === currentUserId;
                   const isConfirmed = share.payment_status === "confirmed";
                   const isPaid = share.payment_status === "paid";
                   const isBusy = processingShareId === share.id;
+                  const days = share.days_present ?? cycleDays;
+                  const canEditDays = isShareOwner || isAdmin;
 
                   return (
                     <div
                       key={share.id}
-                      className="p-3 rounded-xl bg-bg-surface border border-border-subtle flex items-center justify-between gap-3"
+                      className={`p-3.5 rounded-2xl border transition-all flex flex-col gap-2.5 ${
+                        isShareOwner
+                          ? "bg-bg-surface border-accent-teal/40 ring-1 ring-accent-teal/20"
+                          : "bg-bg-surface border-border-subtle"
+                      }`}
                     >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-8 h-8 rounded-lg bg-accent-teal/10 flex items-center justify-center text-caption font-bold text-accent-teal uppercase overflow-hidden shrink-0">
-                          {share.profile?.avatar_url ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={share.profile.avatar_url}
-                              alt="avatar"
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            (share.userName || "R").charAt(0)
-                          )}
+                      {/* Top Row: Name, Share Amount, and Payment Status */}
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-8 h-8 rounded-xl bg-accent-teal/10 flex items-center justify-center text-caption font-bold text-accent-teal uppercase overflow-hidden shrink-0">
+                            {share.profile?.avatar_url ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={share.profile.avatar_url}
+                                alt="avatar"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              (share.userName || "R").charAt(0)
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-body-sm font-semibold text-text-primary truncate flex items-center gap-1">
+                              {share.userName}
+                              {isShareOwner && (
+                                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-accent-teal/15 text-accent-teal">
+                                  You
+                                </span>
+                              )}
+                            </p>
+                            <p className="text-body-sm font-mono font-bold text-text-primary">
+                              {formatCentavos(share.amount_owed_centavos)}
+                            </p>
+                          </div>
                         </div>
-                        <div className="min-w-0">
-                          <p className="text-body-sm font-semibold text-text-primary truncate flex items-center gap-1">
-                            {share.userName} {isShareOwner && "(You)"}
-                          </p>
-                          <p className="text-caption font-mono font-bold text-text-secondary">
-                            {formatCentavos(share.amount_owed_centavos)}
-                          </p>
+
+                        {/* Payment Status / Action */}
+                        <div className="shrink-0">
+                          {isConfirmed ? (
+                            <span className="px-2.5 py-1 rounded-full bg-accent-teal/15 text-accent-teal text-caption font-semibold">
+                              ✓ Confirmed
+                            </span>
+                          ) : isPaid ? (
+                            isPayer || isAdmin ? (
+                              <button
+                                type="button"
+                                onClick={() => handleConfirmPaid(share.id)}
+                                disabled={isBusy}
+                                className="btn-primary py-1 px-3 text-caption font-semibold shadow-sm"
+                              >
+                                {isBusy ? "..." : "Confirm Received ✓"}
+                              </button>
+                            ) : (
+                              <span className="px-2.5 py-1 rounded-full bg-accent-sand/20 text-accent-sand text-caption font-medium">
+                                Pending Confirm
+                              </span>
+                            )
+                          ) : isShareOwner ? (
+                            <button
+                              type="button"
+                              onClick={() => handleMarkPaid(share.id)}
+                              disabled={isBusy}
+                              className="btn-primary py-1 px-3 text-caption font-semibold"
+                            >
+                              {isBusy ? "..." : "Mark Paid"}
+                            </button>
+                          ) : (
+                            <span className="px-2.5 py-1 rounded-full bg-accent-coral/15 text-accent-coral text-caption font-medium">
+                              Unpaid
+                            </span>
+                          )}
                         </div>
                       </div>
 
-                      {/* Action / Badge */}
-                      <div className="shrink-0">
-                        {isConfirmed ? (
-                          <span className="px-2.5 py-1 rounded-full bg-accent-teal/15 text-accent-teal text-caption font-semibold">
-                            ✓ Confirmed
+                      {/* Bottom Row: Days Stepper (Editable for Owner/Admin, View-Only for Others) */}
+                      <div className="pt-2 border-t border-border-subtle/50 flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-caption text-text-tertiary">
+                            Days Present:
                           </span>
-                        ) : isPaid ? (
-                          isPayer || isAdmin ? (
+                          {share.is_days_confirmed ? (
+                            <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-accent-teal/10 text-accent-teal font-medium">
+                              Confirmed
+                            </span>
+                          ) : (
+                            <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-bg-card text-text-tertiary font-medium">
+                              Default
+                            </span>
+                          )}
+                        </div>
+
+                        {canEditDays ? (
+                          <div className="flex items-center gap-1.5 bg-bg-card border border-border-subtle rounded-xl p-0.5">
                             <button
                               type="button"
-                              onClick={() => handleConfirmPaid(share.id)}
-                              disabled={isBusy}
-                              className="btn-primary py-1 px-3 text-caption font-semibold shadow-sm"
+                              onClick={() => handleDayChange(share.id, days, -1)}
+                              disabled={days <= 0 || isBusy}
+                              className="w-7 h-7 rounded-lg bg-bg-surface flex items-center justify-center text-text-secondary hover:text-text-primary font-bold text-body-sm disabled:opacity-30 transition-opacity"
                             >
-                              {isBusy ? "..." : "Confirm Received ✓"}
+                              −
                             </button>
-                          ) : (
-                            <span className="px-2.5 py-1 rounded-full bg-accent-sand/20 text-accent-sand text-caption font-medium">
-                              Pending Confirm
+                            <span className="w-9 text-center font-mono font-bold text-body-sm text-text-primary">
+                              {days}d
                             </span>
-                          )
-                        ) : isShareOwner ? (
-                          <button
-                            type="button"
-                            onClick={() => handleMarkPaid(share.id)}
-                            disabled={isBusy}
-                            className="btn-primary py-1 px-3 text-caption font-semibold"
-                          >
-                            {isBusy ? "..." : "Mark Paid"}
-                          </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDayChange(share.id, days, 1)}
+                              disabled={days >= cycleDays || isBusy}
+                              className="w-7 h-7 rounded-lg bg-bg-surface flex items-center justify-center text-text-secondary hover:text-text-primary font-bold text-body-sm disabled:opacity-30 transition-opacity"
+                            >
+                              +
+                            </button>
+                          </div>
                         ) : (
-                          <span className="px-2.5 py-1 rounded-full bg-accent-coral/15 text-accent-coral text-caption font-medium">
-                            Unpaid
+                          <span className="px-2.5 py-1 rounded-lg bg-bg-card border border-border-subtle font-mono text-caption font-bold text-text-secondary">
+                            {days} of {cycleDays} days
                           </span>
                         )}
                       </div>

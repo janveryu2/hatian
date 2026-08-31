@@ -291,3 +291,79 @@ export function calculateSplit(options: SplitOptions): SplitResult {
     remainderCentavos: totalAmountCentavos - allocatedTotal,
   };
 }
+
+export interface RawMemberShare {
+  id: string;
+  memberId: string;
+  daysPresent: number;
+}
+
+export interface RecalculatedMemberShare {
+  id: string;
+  memberId: string;
+  amountOwedCentavos: number;
+  daysPresent: number;
+}
+
+/**
+ * Pure engine calculation: Recalculates all roommate shares live when any roommate
+ * edits their days present. Conserves exact total down to 1 centavo with zero drift.
+ */
+export function recalculateSharesFromDaysPresent(
+  totalAmountCentavos: number,
+  shares: RawMemberShare[],
+  creatorOrPayerMemberId: string
+): RecalculatedMemberShare[] {
+  if (shares.length === 0) return [];
+  if (totalAmountCentavos <= 0) {
+    return shares.map((s) => ({
+      id: s.id,
+      memberId: s.memberId,
+      amountOwedCentavos: 0,
+      daysPresent: s.daysPresent,
+    }));
+  }
+
+  const totalPersonDays = shares.reduce(
+    (sum, s) => sum + Math.max(0, s.daysPresent || 0),
+    0
+  );
+
+  if (totalPersonDays === 0) {
+    const count = shares.length;
+    const baseShare = Math.floor(totalAmountCentavos / count);
+    const remainder = totalAmountCentavos - baseShare * count;
+    return shares.map((s) => {
+      const isLead = s.memberId === creatorOrPayerMemberId;
+      return {
+        id: s.id,
+        memberId: s.memberId,
+        amountOwedCentavos: baseShare + (isLead ? remainder : 0),
+        daysPresent: s.daysPresent,
+      };
+    });
+  }
+
+  let allocatedSum = 0;
+  const computed = shares.map((s) => {
+    const days = Math.max(0, s.daysPresent || 0);
+    const shareAmt = Math.floor((totalAmountCentavos * days) / totalPersonDays);
+    allocatedSum += shareAmt;
+    return {
+      id: s.id,
+      memberId: s.memberId,
+      amountOwedCentavos: shareAmt,
+      daysPresent: s.daysPresent,
+    };
+  });
+
+  const remainder = totalAmountCentavos - allocatedSum;
+
+  return computed.map((s) => {
+    const isLead = s.memberId === creatorOrPayerMemberId;
+    return {
+      ...s,
+      amountOwedCentavos: s.amountOwedCentavos + (isLead ? remainder : 0),
+    };
+  });
+}
