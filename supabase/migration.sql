@@ -1,0 +1,665 @@
+-- ============================================
+-- HATIAN — Supabase Schema Migration
+-- Run this in the Supabase SQL Editor
+-- ============================================
+
+-- Enable UUID extension (usually already enabled)
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- ============================================
+-- 1. PROFILES
+-- Auto-created on user signup via trigger
+-- ============================================
+CREATE TABLE public.profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  display_name TEXT,
+  avatar_url TEXT,
+  email TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- RLS: users can only read/update their own profile
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can read own profile"
+  ON public.profiles FOR SELECT
+  USING (auth.uid() = id);
+
+CREATE POLICY "Users can update own profile"
+  ON public.profiles FOR UPDATE
+  USING (auth.uid() = id);
+
+-- Auto-create profile on signup
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, display_name, avatar_url, email)
+  VALUES (
+    NEW.id,
+    COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'name'),
+    NEW.raw_user_meta_data->>'avatar_url',
+    NEW.email
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- ============================================
+-- 2. DORMS
+-- ============================================
+CREATE TABLE public.dorms (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL,
+  currency TEXT NOT NULL DEFAULT 'PHP',
+  created_by UUID NOT NULL REFERENCES public.profiles(id),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE public.dorms ENABLE ROW LEVEL SECURITY;
+
+-- Users can read dorms they're a member of
+CREATE POLICY "Members can read their dorms"
+  ON public.dorms FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.dorm_members
+      WHERE dorm_members.dorm_id = dorms.id
+        AND dorm_members.user_id = auth.uid()
+    )
+  );
+
+-- Any authenticated user can create a dorm
+CREATE POLICY "Authenticated users can create dorms"
+  ON public.dorms FOR INSERT
+  WITH CHECK (auth.uid() = created_by);
+
+-- Only admin can update
+CREATE POLICY "Admins can update dorms"
+  ON public.dorms FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.dorm_members
+      WHERE dorm_members.dorm_id = dorms.id
+        AND dorm_members.user_id = auth.uid()
+        AND dorm_members.role = 'admin'
+    )
+  );
+
+-- Only admin can delete
+CREATE POLICY "Admins can delete dorms"
+  ON public.dorms FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.dorm_members
+      WHERE dorm_members.dorm_id = dorms.id
+        AND dorm_members.user_id = auth.uid()
+        AND dorm_members.role = 'admin'
+    )
+  );
+
+-- ============================================
+-- 3. DORM_MEMBERS
+-- ============================================
+CREATE TABLE public.dorm_members (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  dorm_id UUID NOT NULL REFERENCES public.dorms(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.profiles(id),
+  role TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('admin', 'member')),
+  move_in_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  move_out_date DATE,
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (dorm_id, user_id)
+);
+
+CREATE INDEX idx_dorm_members_dorm ON public.dorm_members(dorm_id);
+CREATE INDEX idx_dorm_members_user ON public.dorm_members(user_id);
+
+ALTER TABLE public.dorm_members ENABLE ROW LEVEL SECURITY;
+
+-- Members can read other members in their dorms
+CREATE POLICY "Members can read dorm members"
+  ON public.dorm_members FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.dorm_members AS dm
+      WHERE dm.dorm_id = dorm_members.dorm_id
+        AND dm.user_id = auth.uid()
+    )
+  );
+
+-- Admin can insert members, or self-insert via invite
+CREATE POLICY "Users can join dorms"
+  ON public.dorm_members FOR INSERT
+  WITH CHECK (
+    auth.uid() = user_id
+    OR EXISTS (
+      SELECT 1 FROM public.dorm_members AS dm
+      WHERE dm.dorm_id = dorm_members.dorm_id
+        AND dm.user_id = auth.uid()
+        AND dm.role = 'admin'
+    )
+  );
+
+-- Admin can update members
+CREATE POLICY "Admins can update members"
+  ON public.dorm_members FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.dorm_members AS dm
+      WHERE dm.dorm_id = dorm_members.dorm_id
+        AND dm.user_id = auth.uid()
+        AND dm.role = 'admin'
+    )
+  );
+
+-- Admin can delete members
+CREATE POLICY "Admins can remove members"
+  ON public.dorm_members FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.dorm_members AS dm
+      WHERE dm.dorm_id = dorm_members.dorm_id
+        AND dm.user_id = auth.uid()
+        AND dm.role = 'admin'
+    )
+  );
+
+-- ============================================
+-- 4. DORM_INVITES
+-- ============================================
+CREATE TABLE public.dorm_invites (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  dorm_id UUID NOT NULL REFERENCES public.dorms(id) ON DELETE CASCADE,
+  code TEXT NOT NULL UNIQUE,
+  invited_by UUID NOT NULL REFERENCES public.profiles(id),
+  expires_at TIMESTAMPTZ NOT NULL,
+  is_used BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_dorm_invites_code ON public.dorm_invites(code);
+CREATE INDEX idx_dorm_invites_dorm ON public.dorm_invites(dorm_id);
+
+ALTER TABLE public.dorm_invites ENABLE ROW LEVEL SECURITY;
+
+-- Members can read their dorm's invites
+CREATE POLICY "Members can read dorm invites"
+  ON public.dorm_invites FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.dorm_members
+      WHERE dorm_members.dorm_id = dorm_invites.dorm_id
+        AND dorm_members.user_id = auth.uid()
+    )
+  );
+
+-- Any authenticated user can read invites by code (for joining)
+CREATE POLICY "Users can read invites by code"
+  ON public.dorm_invites FOR SELECT
+  USING (auth.uid() IS NOT NULL);
+
+-- Members can create invites
+CREATE POLICY "Members can create invites"
+  ON public.dorm_invites FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.dorm_members
+      WHERE dorm_members.dorm_id = dorm_invites.dorm_id
+        AND dorm_members.user_id = auth.uid()
+    )
+  );
+
+-- Admin can update invites
+CREATE POLICY "Admins can update invites"
+  ON public.dorm_invites FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.dorm_members
+      WHERE dorm_members.dorm_id = dorm_invites.dorm_id
+        AND dorm_members.user_id = auth.uid()
+        AND dorm_members.role = 'admin'
+    )
+  );
+
+-- ============================================
+-- 5. BILL_CATEGORIES
+-- ============================================
+CREATE TABLE public.bill_categories (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  dorm_id UUID REFERENCES public.dorms(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  icon TEXT NOT NULL DEFAULT '📦',
+  is_predefined BOOLEAN NOT NULL DEFAULT FALSE,
+  sort_order INT NOT NULL DEFAULT 0
+);
+
+CREATE INDEX idx_bill_categories_dorm ON public.bill_categories(dorm_id);
+
+ALTER TABLE public.bill_categories ENABLE ROW LEVEL SECURITY;
+
+-- Everyone can read predefined categories, members can read their dorm's custom ones
+CREATE POLICY "Read bill categories"
+  ON public.bill_categories FOR SELECT
+  USING (
+    dorm_id IS NULL
+    OR EXISTS (
+      SELECT 1 FROM public.dorm_members
+      WHERE dorm_members.dorm_id = bill_categories.dorm_id
+        AND dorm_members.user_id = auth.uid()
+    )
+  );
+
+-- Members can add custom categories to their dorm
+CREATE POLICY "Members can add custom categories"
+  ON public.bill_categories FOR INSERT
+  WITH CHECK (
+    dorm_id IS NOT NULL
+    AND EXISTS (
+      SELECT 1 FROM public.dorm_members
+      WHERE dorm_members.dorm_id = bill_categories.dorm_id
+        AND dorm_members.user_id = auth.uid()
+        AND dorm_members.role = 'admin'
+    )
+  );
+
+-- Seed predefined categories
+INSERT INTO public.bill_categories (id, dorm_id, name, icon, is_predefined, sort_order) VALUES
+  (uuid_generate_v4(), NULL, 'Internet', '📡', TRUE, 0),
+  (uuid_generate_v4(), NULL, 'Water', '💧', TRUE, 1),
+  (uuid_generate_v4(), NULL, 'Electricity', '⚡', TRUE, 2),
+  (uuid_generate_v4(), NULL, 'Rent', '🏠', TRUE, 3),
+  (uuid_generate_v4(), NULL, 'Other', '📦', TRUE, 4);
+
+-- ============================================
+-- 6. BILLS
+-- ============================================
+CREATE TABLE public.bills (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  dorm_id UUID NOT NULL REFERENCES public.dorms(id) ON DELETE CASCADE,
+  category_id UUID NOT NULL REFERENCES public.bill_categories(id),
+  amount_centavos BIGINT NOT NULL CHECK (amount_centavos > 0),
+  billing_period_start DATE NOT NULL,
+  billing_period_end DATE NOT NULL,
+  due_date DATE NOT NULL,
+  created_by UUID NOT NULL REFERENCES public.profiles(id),
+  paid_by UUID NOT NULL REFERENCES public.profiles(id),
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('draft', 'active', 'settled', 'reopened')),
+  split_method TEXT NOT NULL CHECK (split_method IN ('equal', 'percentage', 'custom_amount', 'prorated_by_days')),
+  recurring_template_id UUID,
+  version INT NOT NULL DEFAULT 1,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CHECK (billing_period_end >= billing_period_start)
+);
+
+CREATE INDEX idx_bills_dorm ON public.bills(dorm_id);
+CREATE INDEX idx_bills_due_date ON public.bills(due_date);
+CREATE INDEX idx_bills_status ON public.bills(status);
+
+ALTER TABLE public.bills ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Members can read dorm bills"
+  ON public.bills FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.dorm_members
+      WHERE dorm_members.dorm_id = bills.dorm_id
+        AND dorm_members.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Members can create bills"
+  ON public.bills FOR INSERT
+  WITH CHECK (
+    auth.uid() = created_by
+    AND EXISTS (
+      SELECT 1 FROM public.dorm_members
+      WHERE dorm_members.dorm_id = bills.dorm_id
+        AND dorm_members.user_id = auth.uid()
+        AND dorm_members.status = 'active'
+    )
+  );
+
+CREATE POLICY "Creator or admin can update bills"
+  ON public.bills FOR UPDATE
+  USING (
+    auth.uid() = created_by
+    OR EXISTS (
+      SELECT 1 FROM public.dorm_members
+      WHERE dorm_members.dorm_id = bills.dorm_id
+        AND dorm_members.user_id = auth.uid()
+        AND dorm_members.role = 'admin'
+    )
+  );
+
+CREATE POLICY "Admins can delete bills"
+  ON public.bills FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.dorm_members
+      WHERE dorm_members.dorm_id = bills.dorm_id
+        AND dorm_members.user_id = auth.uid()
+        AND dorm_members.role = 'admin'
+    )
+  );
+
+-- ============================================
+-- 7. BILL_SHARES
+-- ============================================
+CREATE TABLE public.bill_shares (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  bill_id UUID NOT NULL REFERENCES public.bills(id) ON DELETE CASCADE,
+  member_id UUID NOT NULL REFERENCES public.dorm_members(id),
+  amount_owed_centavos BIGINT NOT NULL CHECK (amount_owed_centavos >= 0),
+  amount_paid_centavos BIGINT NOT NULL DEFAULT 0 CHECK (amount_paid_centavos >= 0),
+  payment_status TEXT NOT NULL DEFAULT 'unpaid' CHECK (payment_status IN ('unpaid', 'partial', 'paid', 'confirmed')),
+  paid_at TIMESTAMPTZ,
+  confirmed_at TIMESTAMPTZ,
+  confirmed_by UUID REFERENCES public.profiles(id),
+  UNIQUE (bill_id, member_id)
+);
+
+CREATE INDEX idx_bill_shares_bill ON public.bill_shares(bill_id);
+CREATE INDEX idx_bill_shares_member ON public.bill_shares(member_id);
+
+ALTER TABLE public.bill_shares ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Members can read bill shares"
+  ON public.bill_shares FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.bills
+      JOIN public.dorm_members ON dorm_members.dorm_id = bills.dorm_id
+      WHERE bills.id = bill_shares.bill_id
+        AND dorm_members.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Bill creator or admin can insert shares"
+  ON public.bill_shares FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.bills
+      JOIN public.dorm_members ON dorm_members.dorm_id = bills.dorm_id
+      WHERE bills.id = bill_shares.bill_id
+        AND dorm_members.user_id = auth.uid()
+        AND (bills.created_by = auth.uid() OR dorm_members.role = 'admin')
+    )
+  );
+
+-- Members can update their own share's payment status; creator/admin can update any
+CREATE POLICY "Members can update own share or admin can update any"
+  ON public.bill_shares FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.bills
+      JOIN public.dorm_members ON dorm_members.dorm_id = bills.dorm_id
+      WHERE bills.id = bill_shares.bill_id
+        AND dorm_members.user_id = auth.uid()
+        AND (
+          dorm_members.id = bill_shares.member_id
+          OR bills.created_by = auth.uid()
+          OR dorm_members.role = 'admin'
+        )
+    )
+  );
+
+CREATE POLICY "Admins can delete shares"
+  ON public.bill_shares FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.bills
+      JOIN public.dorm_members ON dorm_members.dorm_id = bills.dorm_id
+      WHERE bills.id = bill_shares.bill_id
+        AND dorm_members.user_id = auth.uid()
+        AND dorm_members.role = 'admin'
+    )
+  );
+
+-- ============================================
+-- 8. BILL_AMENDMENTS
+-- ============================================
+CREATE TABLE public.bill_amendments (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  bill_id UUID NOT NULL REFERENCES public.bills(id) ON DELETE CASCADE,
+  amended_by UUID NOT NULL REFERENCES public.profiles(id),
+  old_amount_centavos BIGINT NOT NULL,
+  new_amount_centavos BIGINT NOT NULL,
+  old_split_method TEXT NOT NULL,
+  new_split_method TEXT NOT NULL,
+  changes_diff JSONB NOT NULL DEFAULT '{}',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_bill_amendments_bill ON public.bill_amendments(bill_id);
+
+ALTER TABLE public.bill_amendments ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Members can read amendments"
+  ON public.bill_amendments FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.bills
+      JOIN public.dorm_members ON dorm_members.dorm_id = bills.dorm_id
+      WHERE bills.id = bill_amendments.bill_id
+        AND dorm_members.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Creator or admin can insert amendments"
+  ON public.bill_amendments FOR INSERT
+  WITH CHECK (auth.uid() = amended_by);
+
+-- ============================================
+-- 9. RECURRING_TEMPLATES
+-- ============================================
+CREATE TABLE public.recurring_templates (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  dorm_id UUID NOT NULL REFERENCES public.dorms(id) ON DELETE CASCADE,
+  category_id UUID NOT NULL REFERENCES public.bill_categories(id),
+  default_amount_centavos BIGINT NOT NULL CHECK (default_amount_centavos > 0),
+  split_method TEXT NOT NULL CHECK (split_method IN ('equal', 'percentage', 'custom_amount', 'prorated_by_days')),
+  draft_days_before_due INT NOT NULL DEFAULT 3,
+  billing_day_of_month INT NOT NULL CHECK (billing_day_of_month BETWEEN 1 AND 31),
+  due_day_of_month INT NOT NULL CHECK (due_day_of_month BETWEEN 1 AND 31),
+  created_by UUID NOT NULL REFERENCES public.profiles(id),
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_recurring_templates_dorm ON public.recurring_templates(dorm_id);
+
+ALTER TABLE public.recurring_templates ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Members can read recurring templates"
+  ON public.recurring_templates FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.dorm_members
+      WHERE dorm_members.dorm_id = recurring_templates.dorm_id
+        AND dorm_members.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Members can create recurring templates"
+  ON public.recurring_templates FOR INSERT
+  WITH CHECK (
+    auth.uid() = created_by
+    AND EXISTS (
+      SELECT 1 FROM public.dorm_members
+      WHERE dorm_members.dorm_id = recurring_templates.dorm_id
+        AND dorm_members.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Creator or admin can update templates"
+  ON public.recurring_templates FOR UPDATE
+  USING (
+    auth.uid() = created_by
+    OR EXISTS (
+      SELECT 1 FROM public.dorm_members
+      WHERE dorm_members.dorm_id = recurring_templates.dorm_id
+        AND dorm_members.user_id = auth.uid()
+        AND dorm_members.role = 'admin'
+    )
+  );
+
+-- ============================================
+-- 10. PAYMENTS (settle-up records)
+-- ============================================
+CREATE TABLE public.payments (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  dorm_id UUID NOT NULL REFERENCES public.dorms(id) ON DELETE CASCADE,
+  from_member UUID NOT NULL REFERENCES public.dorm_members(id),
+  to_member UUID NOT NULL REFERENCES public.dorm_members(id),
+  amount_centavos BIGINT NOT NULL CHECK (amount_centavos > 0),
+  note TEXT,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  confirmed_at TIMESTAMPTZ,
+  CHECK (from_member != to_member)
+);
+
+CREATE INDEX idx_payments_dorm ON public.payments(dorm_id);
+CREATE INDEX idx_payments_from ON public.payments(from_member);
+CREATE INDEX idx_payments_to ON public.payments(to_member);
+
+ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Members can read dorm payments"
+  ON public.payments FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.dorm_members
+      WHERE dorm_members.dorm_id = payments.dorm_id
+        AND dorm_members.user_id = auth.uid()
+    )
+  );
+
+-- Only the sender can create a payment
+CREATE POLICY "Senders can create payments"
+  ON public.payments FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.dorm_members
+      WHERE dorm_members.id = payments.from_member
+        AND dorm_members.user_id = auth.uid()
+    )
+  );
+
+-- Only the receiver can confirm (update) a payment
+CREATE POLICY "Receivers can confirm payments"
+  ON public.payments FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.dorm_members
+      WHERE dorm_members.id = payments.to_member
+        AND dorm_members.user_id = auth.uid()
+    )
+  );
+
+-- Admin can delete payments
+CREATE POLICY "Admins can delete payments"
+  ON public.payments FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.dorm_members
+      WHERE dorm_members.dorm_id = payments.dorm_id
+        AND dorm_members.user_id = auth.uid()
+        AND dorm_members.role = 'admin'
+    )
+  );
+
+-- ============================================
+-- 11. REOPEN_REQUESTS
+-- ============================================
+CREATE TABLE public.reopen_requests (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  bill_id UUID NOT NULL REFERENCES public.bills(id) ON DELETE CASCADE,
+  requested_by UUID NOT NULL REFERENCES public.profiles(id),
+  reason TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+  reviewed_by UUID REFERENCES public.profiles(id),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  reviewed_at TIMESTAMPTZ
+);
+
+CREATE INDEX idx_reopen_requests_bill ON public.reopen_requests(bill_id);
+
+ALTER TABLE public.reopen_requests ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Members can read reopen requests"
+  ON public.reopen_requests FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.bills
+      JOIN public.dorm_members ON dorm_members.dorm_id = bills.dorm_id
+      WHERE bills.id = reopen_requests.bill_id
+        AND dorm_members.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Members can create reopen requests"
+  ON public.reopen_requests FOR INSERT
+  WITH CHECK (auth.uid() = requested_by);
+
+-- Admin or bill creator can approve/reject
+CREATE POLICY "Admin or creator can review reopen requests"
+  ON public.reopen_requests FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.bills
+      JOIN public.dorm_members ON dorm_members.dorm_id = bills.dorm_id
+      WHERE bills.id = reopen_requests.bill_id
+        AND dorm_members.user_id = auth.uid()
+        AND (bills.created_by = auth.uid() OR dorm_members.role = 'admin')
+    )
+  );
+
+-- ============================================
+-- Updated_at triggers
+-- ============================================
+CREATE OR REPLACE FUNCTION public.update_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_profiles_updated_at
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
+CREATE TRIGGER update_dorms_updated_at
+  BEFORE UPDATE ON public.dorms
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
+CREATE TRIGGER update_dorm_members_updated_at
+  BEFORE UPDATE ON public.dorm_members
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
+CREATE TRIGGER update_recurring_templates_updated_at
+  BEFORE UPDATE ON public.recurring_templates
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
+CREATE TRIGGER update_bills_updated_at
+  BEFORE UPDATE ON public.bills
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
+-- ============================================
+-- Enable Realtime on key tables
+-- ============================================
+ALTER PUBLICATION supabase_realtime ADD TABLE public.bills;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.bill_shares;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.payments;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.dorm_members;

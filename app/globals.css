@@ -1,0 +1,496 @@
+@import "tailwindcss";
+
+/* ============================================
+   HATIAN DESIGN TOKENS
+   Warm, home-feeling palette — not corporate SaaS
+   ============================================ */
+
+:root {
+  /* Base surfaces */
+  --bg-primary: #FAFAF7;
+  --bg-secondary: #F2F0EB;
+  --bg-tertiary: #E8E5DE;
+  --bg-card: #FFFFFF;
+  --bg-elevated: #FFFFFF;
+
+  /* Text */
+  --text-primary: #1A1A17;
+  --text-secondary: #6B6960;
+  --text-tertiary: #9C978A;
+  --text-inverse: #FAFAF7;
+
+  /* Accent — Teal (positive/settled) */
+  --accent-teal: #1A9E8F;
+  --accent-teal-soft: #E6F7F5;
+  --accent-teal-hover: #168578;
+
+  /* Accent — Coral (owed/negative) */
+  --accent-coral: #E0614D;
+  --accent-coral-soft: #FDE8E4;
+  --accent-coral-hover: #C44E3C;
+
+  /* Accent — Amber (warning/pending) */
+  --accent-amber: #D4940A;
+  --accent-amber-soft: #FEF5E0;
+
+  /* Accent — Slate blue (info/neutral) */
+  --accent-blue: #4A7FB5;
+  --accent-blue-soft: #E8F0F8;
+
+  /* Borders & dividers */
+  --border-primary: #E0DDD5;
+  --border-secondary: #ECE9E2;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(26, 26, 23, 0.04), 0 1px 2px rgba(26, 26, 23, 0.06);
+  --shadow-md: 0 4px 12px rgba(26, 26, 23, 0.06), 0 2px 4px rgba(26, 26, 23, 0.04);
+  --shadow-lg: 0 8px 28px rgba(26, 26, 23, 0.08), 0 4px 8px rgba(26, 26, 23, 0.04);
+  --shadow-sheet: 0 -8px 40px rgba(26, 26, 23, 0.12);
+
+  /* Glass */
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.3);
+
+  /* Category colors */
+  --cat-internet: #4A7FB5;
+  --cat-water: #1A9E8F;
+  --cat-electricity: #D4940A;
+  --cat-rent: #9B6B9E;
+  --cat-other: #6B6960;
+
+  /* Radii */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* Tab bar height */
+  --tab-bar-height: 56px;
+}
+
+/* ============================================
+   DARK MODE
+   True dark, not gray-900
+   ============================================ */
+[data-theme="dark"] {
+  --bg-primary: #0A0A0F;
+  --bg-secondary: #141419;
+  --bg-tertiary: #1E1E26;
+  --bg-card: #18181F;
+  --bg-elevated: #1E1E26;
+
+  --text-primary: #EDEDEB;
+  --text-secondary: #9C978A;
+  --text-tertiary: #6B6960;
+  --text-inverse: #1A1A17;
+
+  --accent-teal: #2DBFAD;
+  --accent-teal-soft: rgba(45, 191, 173, 0.12);
+  --accent-teal-hover: #24A696;
+
+  --accent-coral: #F07A69;
+  --accent-coral-soft: rgba(240, 122, 105, 0.12);
+  --accent-coral-hover: #E0614D;
+
+  --accent-amber: #EAA820;
+  --accent-amber-soft: rgba(234, 168, 32, 0.12);
+
+  --accent-blue: #6B9FD4;
+  --accent-blue-soft: rgba(107, 159, 212, 0.12);
+
+  --border-primary: #2A2A33;
+  --border-secondary: #1E1E26;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25), 0 2px 4px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 8px 28px rgba(0, 0, 0, 0.35), 0 4px 8px rgba(0, 0, 0, 0.2);
+  --shadow-sheet: 0 -8px 40px rgba(0, 0, 0, 0.4);
+
+  --glass-bg: rgba(10, 10, 15, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.06);
+
+  --cat-internet: #6B9FD4;
+  --cat-water: #2DBFAD;
+  --cat-electricity: #EAA820;
+  --cat-rent: #B98ABD;
+  --cat-other: #9C978A;
+}
+
+/* Also support system preference */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg-primary: #0A0A0F;
+    --bg-secondary: #141419;
+    --bg-tertiary: #1E1E26;
+    --bg-card: #18181F;
+    --bg-elevated: #1E1E26;
+
+    --text-primary: #EDEDEB;
+    --text-secondary: #9C978A;
+    --text-tertiary: #6B6960;
+    --text-inverse: #1A1A17;
+
+    --accent-teal: #2DBFAD;
+    --accent-teal-soft: rgba(45, 191, 173, 0.12);
+    --accent-teal-hover: #24A696;
+
+    --accent-coral: #F07A69;
+    --accent-coral-soft: rgba(240, 122, 105, 0.12);
+    --accent-coral-hover: #E0614D;
+
+    --accent-amber: #EAA820;
+    --accent-amber-soft: rgba(234, 168, 32, 0.12);
+
+    --accent-blue: #6B9FD4;
+    --accent-blue-soft: rgba(107, 159, 212, 0.12);
+
+    --border-primary: #2A2A33;
+    --border-secondary: #1E1E26;
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25), 0 2px 4px rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 8px 28px rgba(0, 0, 0, 0.35), 0 4px 8px rgba(0, 0, 0, 0.2);
+    --shadow-sheet: 0 -8px 40px rgba(0, 0, 0, 0.4);
+
+    --glass-bg: rgba(10, 10, 15, 0.72);
+    --glass-border: rgba(255, 255, 255, 0.06);
+
+    --cat-internet: #6B9FD4;
+    --cat-water: #2DBFAD;
+    --cat-electricity: #EAA820;
+    --cat-rent: #B98ABD;
+    --cat-other: #9C978A;
+  }
+}
+
+/* ============================================
+   TAILWIND THEME EXTENSION
+   ============================================ */
+@theme inline {
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-tertiary: var(--bg-tertiary);
+  --color-bg-card: var(--bg-card);
+  --color-bg-elevated: var(--bg-elevated);
+
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-text-inverse: var(--text-inverse);
+
+  --color-accent-teal: var(--accent-teal);
+  --color-accent-teal-soft: var(--accent-teal-soft);
+  --color-accent-coral: var(--accent-coral);
+  --color-accent-coral-soft: var(--accent-coral-soft);
+  --color-accent-amber: var(--accent-amber);
+  --color-accent-amber-soft: var(--accent-amber-soft);
+  --color-accent-blue: var(--accent-blue);
+  --color-accent-blue-soft: var(--accent-blue-soft);
+
+  --color-border-primary: var(--border-primary);
+  --color-border-secondary: var(--border-secondary);
+
+  --color-glass-bg: var(--glass-bg);
+  --color-glass-border: var(--glass-border);
+
+  --color-cat-internet: var(--cat-internet);
+  --color-cat-water: var(--cat-water);
+  --color-cat-electricity: var(--cat-electricity);
+  --color-cat-rent: var(--cat-rent);
+  --color-cat-other: var(--cat-other);
+
+  --font-sans: var(--font-outfit);
+  --font-mono: var(--font-jetbrains-mono);
+}
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-outfit), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Safe area for Capacitor */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* ============================================
+   TYPOGRAPHY SCALE
+   Based on 1.25 ratio (Major Third)
+   ============================================ */
+.text-display {
+  font-size: 2rem;       /* 32px */
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.text-heading-1 {
+  font-size: 1.6rem;     /* ~25.6px */
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+.text-heading-2 {
+  font-size: 1.28rem;    /* ~20.5px */
+  line-height: 1.25;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.text-heading-3 {
+  font-size: 1.024rem;   /* ~16.4px */
+  line-height: 1.3;
+  font-weight: 600;
+}
+
+.text-body {
+  font-size: 0.9375rem;  /* 15px — slightly smaller than 16 for density */
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.text-body-sm {
+  font-size: 0.8125rem;  /* 13px */
+  line-height: 1.45;
+  font-weight: 400;
+}
+
+.text-caption {
+  font-size: 0.6875rem;  /* 11px */
+  line-height: 1.4;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+/* Tabular numbers for currency — prevents jitter on updates */
+.font-tabular {
+  font-family: var(--font-jetbrains-mono), 'SF Mono', 'Cascadia Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" on;
+}
+
+/* Currency display */
+.text-currency-lg {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.text-currency-md {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 1.1rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.text-currency-sm {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================
+   GLASS EFFECT
+   ============================================ */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  border: 1px solid var(--glass-border);
+}
+
+.glass-heavy {
+  background: var(--glass-bg);
+  backdrop-filter: blur(40px) saturate(1.8);
+  -webkit-backdrop-filter: blur(40px) saturate(1.8);
+  border: 1px solid var(--glass-border);
+}
+
+/* ============================================
+   CARD STYLES
+   ============================================ */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.card-elevated {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+
+/* ============================================
+   SHEET MODAL
+   ============================================ */
+.sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 50;
+}
+
+.sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: var(--shadow-sheet);
+  z-index: 51;
+  max-height: 92vh;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
+}
+
+.sheet-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--border-primary);
+  border-radius: var(--radius-full);
+  margin: 8px auto 0;
+}
+
+/* ============================================
+   SKELETON LOADING
+   ============================================ */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-tertiary) 25%,
+    var(--bg-secondary) 37%,
+    var(--bg-tertiary) 63%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* ============================================
+   BUTTON STYLES
+   ============================================ */
+.btn-primary {
+  background: var(--accent-teal);
+  color: white;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  padding: 12px 24px;
+  transition: background 0.15s ease;
+  cursor: pointer;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-primary:hover {
+  background: var(--accent-teal-hover);
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+.btn-secondary {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  padding: 12px 24px;
+  transition: background 0.15s ease;
+  cursor: pointer;
+  border: 1px solid var(--border-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-secondary:hover {
+  background: var(--border-primary);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: 0.9375rem;
+  padding: 12px 24px;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-ghost:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+/* ============================================
+   SCROLLBAR STYLING
+   ============================================ */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-primary);
+  border-radius: var(--radius-full);
+}
+
+/* ============================================
+   SAFE AREA UTILITIES
+   ============================================ */
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-x {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
