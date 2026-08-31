@@ -56,9 +56,14 @@ export default function SettlePage() {
 
   const memberMap = new Map(members.map((m) => [m.id, m]));
 
-  // Payments pending confirmation by CURRENT user (i.e. payments where current user is receiver)
+  // Payments pending confirmation by CURRENT user (where current user is receiver)
   const pendingIncomingPayments = payments.filter(
     (p) => p.to_member === myMemberId && p.status === "pending"
+  );
+
+  // Outgoing payments made by CURRENT user waiting for roommate confirmation
+  const pendingOutgoingPayments = payments.filter(
+    (p) => p.from_member === myMemberId && p.status === "pending"
   );
 
   const handleOpenSettleDebt = (toMemberId: string, amountCentavos: number) => {
@@ -249,6 +254,44 @@ export default function SettlePage() {
             </motion.div>
           )}
 
+          {/* Outgoing Pending Confirmations Alert */}
+          {pendingOutgoingPayments.length > 0 && (
+            <motion.div
+              variants={itemVariants}
+              className="p-4 rounded-2xl bg-accent-sand/10 border border-accent-sand/25 space-y-2.5"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-xl">⏳</span>
+                <p className="text-body-sm font-semibold text-text-primary">
+                  Payments Waiting for Roommate Confirmation ({pendingOutgoingPayments.length})
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                {pendingOutgoingPayments.map((p) => (
+                  <div
+                    key={p.id}
+                    className="p-3 rounded-xl bg-bg-card border border-border-subtle flex items-center justify-between gap-3 text-body-sm"
+                  >
+                    <div>
+                      <p className="font-medium text-text-primary">
+                        You sent {formatCentavos(p.amount_centavos)} to {p.toName}
+                      </p>
+                      {p.note && (
+                        <p className="text-caption text-text-tertiary">
+                          Note: {p.note}
+                        </p>
+                      )}
+                    </div>
+                    <span className="text-caption px-2.5 py-1 rounded-full bg-accent-sand/20 text-accent-sand font-medium shrink-0">
+                      Waiting on {p.toName}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
           {/* Simplified Debt Settle-Up Recommendations */}
           <motion.div variants={itemVariants} className="space-y-3">
             <div className="flex items-center justify-between">
@@ -280,6 +323,12 @@ export default function SettlePage() {
                     ? "You"
                     : toMem?.profile?.display_name || "Roommate";
 
+                  const pendingOutgoing = isMeSender
+                    ? pendingOutgoingPayments.find(
+                        (p) => p.to_member === planItem.toMember
+                      )
+                    : null;
+
                   return (
                     <div
                       key={idx}
@@ -300,7 +349,7 @@ export default function SettlePage() {
                             <span className={isMeSender ? "text-accent-coral" : ""}>
                               {fromName}
                             </span>{" "}
-                            pays{" "}
+                            {isMeSender ? "pay" : "pays"}{" "}
                             <span className={isMeReceiver ? "text-accent-teal" : ""}>
                               {toName}
                             </span>
@@ -311,19 +360,27 @@ export default function SettlePage() {
                         </div>
                       </div>
 
-                      {/* Pay CTA if current user is the debtor */}
+                      {/* Pay CTA or Pending Confirmation badge if current user is the debtor */}
                       {isMeSender && (
-                        <button
-                          onClick={() =>
-                            handleOpenSettleDebt(
-                              planItem.toMember,
-                              planItem.amountCentavos
-                            )
-                          }
-                          className="btn-primary py-2 px-3.5 text-caption font-semibold shrink-0"
-                        >
-                          Pay Now →
-                        </button>
+                        pendingOutgoing ? (
+                          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-accent-sand/15 border border-accent-sand/30 text-accent-sand text-caption font-semibold shrink-0">
+                            <span>⏳</span>
+                            <span>Pending Confirm</span>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleOpenSettleDebt(
+                                planItem.toMember,
+                                planItem.amountCentavos
+                              )
+                            }
+                            className="btn-primary py-2 px-3.5 text-caption font-semibold shrink-0 shadow-md shadow-accent-teal/20"
+                          >
+                            Pay Now →
+                          </button>
+                        )
                       )}
                     </div>
                   );
