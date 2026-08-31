@@ -8,11 +8,8 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ============================================
 -- 1. DROP EXISTING OBJECTS (FOR CLEAN RERUNS)
+-- Drop tables first with CASCADE to cleanly remove triggers
 -- ============================================
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-DROP FUNCTION IF EXISTS public.handle_new_user();
-DROP FUNCTION IF EXISTS public.update_updated_at();
-
 DROP TABLE IF EXISTS public.reopen_requests CASCADE;
 DROP TABLE IF EXISTS public.payments CASCADE;
 DROP TABLE IF EXISTS public.bill_amendments CASCADE;
@@ -24,6 +21,10 @@ DROP TABLE IF EXISTS public.dorm_invites CASCADE;
 DROP TABLE IF EXISTS public.dorm_members CASCADE;
 DROP TABLE IF EXISTS public.dorms CASCADE;
 DROP TABLE IF EXISTS public.profiles CASCADE;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
+DROP FUNCTION IF EXISTS public.update_updated_at() CASCADE;
 
 -- ============================================
 -- 2. CREATE TABLES
