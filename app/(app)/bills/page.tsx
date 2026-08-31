@@ -10,6 +10,8 @@ import { useBills, type BillWithDetails } from "@/lib/hooks/useBills";
 import { CreateBillModal } from "@/components/bills/CreateBillModal";
 import { BillDetailModal } from "@/components/bills/BillDetailModal";
 import { LoadingSkeletonCard } from "@/components/ui/LoadingSkeleton";
+import { useTranslation } from "@/lib/context/LanguageContext";
+import { LanguageToggle } from "@/components/ui/LanguageToggle";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -47,6 +49,7 @@ export default function BillsPage() {
     deleteBill,
     addCategory,
   } = useBills();
+  const { t } = useTranslation();
 
   const [selectedFilter, setSelectedFilter] = useState<string>("all");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -98,25 +101,28 @@ export default function BillsPage() {
       {/* Header & Add Button */}
       <motion.div
         variants={itemVariants}
-        className="flex items-center justify-between"
+        className="flex items-center justify-between gap-2"
       >
         <div>
           <h1 className="text-heading-1 font-bold text-text-primary tracking-tight">
-            Bills
+            {t("bills.title")}
           </h1>
           <p className="text-body-sm text-text-tertiary">
-            {activeDorm ? activeDorm.name : "Track and split dorm expenses"}
+            {activeDorm ? activeDorm.name : t("bills.subtitle")}
           </p>
         </div>
 
-        {activeDorm && (
-          <button
-            onClick={() => setIsCreateOpen(true)}
-            className="btn-primary py-2.5 px-4 text-body-sm flex items-center gap-1.5 shadow-lg shadow-accent-teal/15"
-          >
-            <span>+</span> Add Bill
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          <LanguageToggle variant="header" />
+          {activeDorm && (
+            <button
+              onClick={() => setIsCreateOpen(true)}
+              className="btn-primary py-2.5 px-3.5 text-body-sm flex items-center gap-1.5 shadow-lg shadow-accent-teal/15"
+            >
+              <span>+</span> {t("bills.addBill")}
+            </button>
+          )}
+        </div>
       </motion.div>
 
       {error && (
@@ -130,10 +136,10 @@ export default function BillsPage() {
         <div className="card p-8 text-center space-y-3">
           <span className="text-4xl block">🏠</span>
           <p className="text-body-md font-semibold text-text-primary">
-            No Dorm Selected
+            {t("settle.noDormTitle")}
           </p>
           <p className="text-body-sm text-text-tertiary max-w-[260px] mx-auto">
-            Please create or join a dorm first to manage and split bills.
+            {t("settle.noDormSub")}
           </p>
         </div>
       ) : (
@@ -151,7 +157,7 @@ export default function BillsPage() {
                   : "bg-bg-surface text-text-secondary border border-border-subtle hover:border-border-default"
               }`}
             >
-              All ({bills.length})
+              {t("bills.filterAll")} ({bills.length})
             </button>
 
             <button
@@ -162,7 +168,7 @@ export default function BillsPage() {
                   : "bg-bg-surface text-text-secondary border border-border-subtle hover:border-border-default"
               }`}
             >
-              Unsettled ({bills.filter((b) => !b.isFullySettled).length})
+              {t("bills.filterUnpaid")} ({bills.filter((b) => !b.isFullySettled).length})
             </button>
 
             <button
@@ -173,7 +179,7 @@ export default function BillsPage() {
                   : "bg-bg-surface text-text-secondary border border-border-subtle hover:border-border-default"
               }`}
             >
-              Settled ({bills.filter((b) => b.isFullySettled).length})
+              {t("bills.filterPaid")} ({bills.filter((b) => b.isFullySettled).length})
             </button>
 
             {categories.map((cat) => (
@@ -200,19 +206,25 @@ export default function BillsPage() {
             >
               <div className="text-4xl mb-3">📋</div>
               <p className="text-heading-3 text-text-primary font-semibold">
-                No bills found
+                {selectedFilter === "unsettled"
+                  ? t("bills.noUnpaidBills")
+                  : selectedFilter === "settled"
+                  ? t("bills.noSettledBills")
+                  : t("bills.noBillsYet")}
               </p>
               <p className="text-body-sm text-text-tertiary mt-1 mb-6 max-w-[260px]">
-                {selectedFilter !== "all"
-                  ? "No bills match the selected filter"
-                  : "Add your first bill to start tracking shared expenses"}
+                {selectedFilter === "unsettled"
+                  ? t("bills.noUnpaidSub")
+                  : selectedFilter === "settled"
+                  ? t("bills.noSettledSub")
+                  : t("bills.noBillsSub")}
               </p>
               {selectedFilter === "all" && (
                 <button
                   onClick={() => setIsCreateOpen(true)}
                   className="btn-primary py-2.5 px-5 text-body-sm"
                 >
-                  + Add Bill
+                  + {t("bills.addBill")}
                 </button>
               )}
             </motion.div>
@@ -242,10 +254,10 @@ export default function BillsPage() {
                             {bill.category?.name || "Bill"}
                           </p>
                           <p className="text-caption text-text-tertiary">
-                            Due {bill.due_date}
+                            {t("bills.due", { date: bill.due_date })}
                             {isOverdue && (
                               <span className="text-accent-terracotta font-medium ml-1">
-                                • Overdue
+                                • {t("bills.overdue")}
                               </span>
                             )}
                           </p>
@@ -257,7 +269,7 @@ export default function BillsPage() {
                           {formatCentavos(bill.amount_centavos)}
                         </p>
                         <p className="text-caption text-text-tertiary">
-                          {bill.shares.length} shares
+                          {t("bills.sharesCount", { count: bill.shares.length })}
                         </p>
                       </div>
                     </div>
@@ -268,13 +280,13 @@ export default function BillsPage() {
                         <span className="text-caption text-text-tertiary flex items-center gap-1.5 truncate">
                           <span>💳</span>
                           <span>
-                            {bill.payerProfile?.display_name || "Roommate"}
-                            {isPayer ? " (You)" : ""}
+                            {bill.payerProfile?.display_name || t("common.roommate")}
+                            {isPayer ? ` (${t("common.you")})` : ""}
                           </span>
                         </span>
                         {bill.isProvisional && (
                           <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-accent-sand/15 text-accent-sand font-medium shrink-0">
-                            Waiting on {bill.unconfirmedCount}
+                            {t("bills.waitingOnCount", { count: bill.unconfirmedCount })}
                           </span>
                         )}
                       </div>
@@ -282,7 +294,7 @@ export default function BillsPage() {
                       {/* User Share Pill */}
                       {isPayer ? (
                         <span className="text-caption font-semibold text-accent-teal">
-                          You fronted this
+                          {t("bills.youFronted")}
                         </span>
                       ) : bill.userShare ? (
                         <span
@@ -297,20 +309,24 @@ export default function BillsPage() {
                           }`}
                         >
                           {bill.userShare.payment_status === "confirmed"
-                            ? "Paid ✓"
+                            ? t("bills.paidStatus")
                             : bill.userShare.payment_status === "paid"
-                            ? "Pending"
+                            ? t("bills.pendingStatus")
                             : bill.userShare.payment_status === "acknowledged"
-                            ? `Will pay ${formatCentavos(
-                                bill.userShare.amount_owed_centavos
-                              )}`
-                            : `You owe ${formatCentavos(
-                                bill.userShare.amount_owed_centavos
-                              )}`}
+                            ? t("bills.willPayAmount", {
+                                amount: formatCentavos(
+                                  bill.userShare.amount_owed_centavos
+                                ),
+                              })
+                            : t("bills.youOweAmount", {
+                                amount: formatCentavos(
+                                  bill.userShare.amount_owed_centavos
+                                ),
+                              })}
                         </span>
                       ) : (
                         <span className="text-caption text-text-tertiary">
-                          Not in split
+                          {t("bills.notInSplit")}
                         </span>
                       )}
                     </div>

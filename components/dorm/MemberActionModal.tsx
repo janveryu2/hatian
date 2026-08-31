@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SPRING } from "@/lib/utils/constants";
 import { formatCentavos } from "@/lib/utils/currency";
 import type { DormMemberWithProfile } from "@/lib/hooks/useDorm";
+import { useTranslation } from "@/lib/context/LanguageContext";
 
 interface MemberActionModalProps {
   isOpen: boolean;
@@ -36,6 +37,7 @@ export function MemberActionModal({
   onUpdateStatus,
   onRemove,
 }: MemberActionModalProps) {
+  const { t } = useTranslation();
   const [moveOutDate, setMoveOutDate] = useState(
     new Date().toISOString().split("T")[0]
   );

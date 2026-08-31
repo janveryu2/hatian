@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { SPRING } from "@/lib/utils/constants";
+import { useTranslation } from "@/lib/context/LanguageContext";
 
 interface TabItem {
   href: string;
@@ -100,8 +101,28 @@ const TABS: TabItem[] = [
 
 export function BottomTabBar() {
   const pathname = usePathname();
+  const { t } = useTranslation();
 
-  const activeIndex = TABS.findIndex((tab) =>
+  const tabs: TabItem[] = [
+    {
+      ...TABS[0],
+      label: t("nav.home"),
+    },
+    {
+      ...TABS[1],
+      label: t("nav.bills"),
+    },
+    {
+      ...TABS[2],
+      label: t("nav.settle"),
+    },
+    {
+      ...TABS[3],
+      label: t("nav.dorm"),
+    },
+  ];
+
+  const activeIndex = tabs.findIndex((tab) =>
     pathname.startsWith(tab.matchPrefix)
   );
 
@@ -118,8 +139,8 @@ export function BottomTabBar() {
           <motion.div
             className="absolute top-0 h-[3px] rounded-b-full"
             style={{
-              width: `${100 / TABS.length}%`,
-              left: `${(activeIndex * 100) / TABS.length}%`,
+              width: `${100 / tabs.length}%`,
+              left: `${(activeIndex * 100) / tabs.length}%`,
               background: "var(--accent-teal)",
             }}
             layoutId="tab-indicator"
@@ -127,7 +148,7 @@ export function BottomTabBar() {
           />
         )}
 
-        {TABS.map((tab) => {
+        {tabs.map((tab) => {
           const isActive = pathname.startsWith(tab.matchPrefix);
           return (
             <Link

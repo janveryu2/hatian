@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SPRING } from "@/lib/utils/constants";
+import { useTranslation } from "@/lib/context/LanguageContext";
 
 interface CreateDormModalProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ export function CreateDormModal({
   onClose,
   onSubmit,
 }: CreateDormModalProps) {
+  const { t } = useTranslation();
   const [dormName, setDormName] = useState("");
   const [moveInDate, setMoveInDate] = useState(
     new Date().toISOString().split("T")[0]
@@ -77,10 +79,10 @@ export function CreateDormModal({
                 </span>
                 <div>
                   <h2 className="text-heading-3 font-semibold text-text-primary">
-                    Create a Dorm
+                    {t("dorm.createDormBtn")}
                   </h2>
                   <p className="text-body-sm text-text-tertiary">
-                    Set up your shared household
+                    {t("dorm.subtitle")}
                   </p>
                 </div>
               </div>
@@ -135,20 +137,6 @@ export function CreateDormModal({
                 </p>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-bg-surface border border-border-subtle flex items-center justify-between">
-                <div>
-                  <p className="text-body-sm font-medium text-text-primary">
-                    Default Currency
-                  </p>
-                  <p className="text-caption text-text-tertiary">
-                    Philippine Peso
-                  </p>
-                </div>
-                <span className="px-3 py-1 rounded-lg bg-accent-teal/15 text-accent-teal font-mono font-semibold text-body-sm">
-                  ₱ PHP
-                </span>
-              </div>
-
               <div className="pt-2 flex gap-3">
                 <button
                   type="button"
@@ -156,7 +144,7 @@ export function CreateDormModal({
                   disabled={isSubmitting}
                   className="flex-1 btn-secondary"
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </button>
                 <button
                   type="submit"
@@ -169,7 +157,7 @@ export function CreateDormModal({
                       Creating...
                     </>
                   ) : (
-                    "Create Dorm"
+                    t("dorm.createDormBtn")
                   )}
                 </button>
               </div>

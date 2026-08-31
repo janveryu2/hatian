@@ -7,6 +7,7 @@ import { pesosToCentavos, formatCentavos } from "@/lib/utils/currency";
 import { calculateSplit, daysBetween, type SplitParticipant } from "@/lib/engine/split";
 import type { BillCategory } from "@/lib/supabase/types";
 import type { DormMemberWithProfile } from "@/lib/hooks/useDorm";
+import { useTranslation } from "@/lib/context/LanguageContext";
 
 interface CreateBillModalProps {
   isOpen: boolean;
@@ -41,6 +42,7 @@ export function CreateBillModal({
   onSubmit,
   onAddCategory,
 }: CreateBillModalProps) {
+  const { t } = useTranslation();
   // Category & basic bill info
   const [selectedCategoryId, setSelectedCategoryId] = useState(
     categories[0]?.id || ""
@@ -237,10 +239,10 @@ export function CreateBillModal({
             <div className="flex items-center justify-between mb-5">
               <div>
                 <h2 className="text-heading-2 font-bold text-text-primary">
-                  Add a Bill
+                  {t("bills.createBillTitle")}
                 </h2>
                 <p className="text-body-sm text-text-tertiary">
-                  Enter days present — shares calculate automatically
+                  {t("bills.daysHelperText")}
                 </p>
               </div>
               <button
@@ -262,7 +264,7 @@ export function CreateBillModal({
               {/* 1. Category Selection */}
               <div>
                 <label className="block text-caption font-semibold uppercase text-text-secondary mb-2">
-                  Category
+                  {t("bills.categoryLabel")}
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {categories.map((cat) => {
@@ -290,7 +292,7 @@ export function CreateBillModal({
                       onClick={() => setIsAddingCategory(true)}
                       className="px-3 py-2 rounded-xl text-body-sm font-medium border border-dashed border-border-subtle text-text-tertiary hover:text-accent-teal hover:border-accent-teal/50 transition-colors"
                     >
-                      + Custom
+                      {t("bills.newCategory")}
                     </button>
                   )}
                 </div>
@@ -310,7 +312,7 @@ export function CreateBillModal({
                       type="text"
                       value={newCatName}
                       onChange={(e) => setNewCatName(e.target.value)}
-                      placeholder="Category name"
+                      placeholder={t("bills.categoryNamePlaceholder")}
                       className="flex-1 px-3 py-1.5 text-body-sm rounded-lg bg-bg-primary border border-border-subtle text-text-primary"
                     />
                     <button
@@ -331,14 +333,14 @@ export function CreateBillModal({
                       }}
                       className="px-3 py-1.5 rounded-lg bg-accent-teal text-white text-caption font-semibold"
                     >
-                      Add
+                      {t("common.confirm")}
                     </button>
                     <button
                       type="button"
                       onClick={() => setIsAddingCategory(false)}
                       className="px-2 py-1.5 text-text-tertiary text-caption"
                     >
-                      Cancel
+                      {t("common.cancel")}
                     </button>
                   </div>
                 )}
@@ -347,7 +349,7 @@ export function CreateBillModal({
               {/* 2. Total Amount Input */}
               <div>
                 <label className="block text-caption font-semibold uppercase text-text-secondary mb-1.5">
-                  Total Bill Amount
+                  {t("bills.billAmountLabel")}
                 </label>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-heading-3 font-semibold text-text-tertiary font-mono">
@@ -370,7 +372,7 @@ export function CreateBillModal({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-caption font-semibold uppercase text-text-secondary mb-1">
-                    Period Start
+                    {t("bills.billingPeriodLabel")} (Start)
                   </label>
                   <input
                     type="date"
@@ -382,7 +384,7 @@ export function CreateBillModal({
                 </div>
                 <div>
                   <label className="block text-caption font-semibold uppercase text-text-secondary mb-1">
-                    Period End
+                    {t("bills.billingPeriodLabel")} (End)
                   </label>
                   <input
                     type="date"
@@ -398,7 +400,7 @@ export function CreateBillModal({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-caption font-semibold uppercase text-text-secondary mb-1">
-                    Paid By (Creditor)
+                    {t("bills.frontedByLabel")}
                   </label>
                   <select
                     value={paidById}
@@ -407,14 +409,14 @@ export function CreateBillModal({
                   >
                     {activeMembers.map((m) => (
                       <option key={m.id} value={m.id}>
-                        {m.name} {m.id === currentUserId ? "(You)" : ""}
+                        {m.name} {m.id === currentUserId ? `(${t("common.you")})` : ""}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div>
                   <label className="block text-caption font-semibold uppercase text-text-secondary mb-1">
-                    Due Date
+                    {t("bills.dueDateLabel")}
                   </label>
                   <input
                     type="date"
@@ -432,14 +434,14 @@ export function CreateBillModal({
                 <div className="flex items-center justify-between mb-2.5">
                   <div>
                     <label className="block text-caption font-semibold uppercase text-text-secondary">
-                      Roommate Self-Entry & Split Preview
+                      {t("bills.daysPresentTitle")}
                     </label>
                     <p className="text-caption text-text-tertiary">
-                      Billing cycle: {cycleDays} days. Roommates will enter their own days upon opening the bill.
+                      {t("bills.daysPresentSub")}
                     </p>
                   </div>
                   <span className="text-caption font-mono text-accent-teal bg-accent-teal/10 px-2.5 py-1 rounded-lg">
-                    {activeMembers.length} Roommates
+                    {activeMembers.length} {t("common.roommates")}
                   </span>
                 </div>
 
@@ -469,28 +471,25 @@ export function CreateBillModal({
                             {member.name}
                             {isCreator && (
                               <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-accent-teal/15 text-accent-teal shrink-0">
-                                You (Creator)
+                                {t("common.you")}
                               </span>
                             )}
                             {isPayer && (
                               <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-accent-terracotta/15 text-accent-terracotta shrink-0">
-                                Paid Bill
+                                {t("bills.paidStatus")}
                               </span>
                             )}
                           </p>
 
                           <p className="text-caption text-text-tertiary">
                             {totalCentavos === 0 ? (
-                              "(Enter bill amount above to preview)"
+                              "(₱0.00)"
                             ) : (
                               <>
-                                Est. Share:{" "}
-                                <span className="font-mono font-bold text-text-primary">
-                                  {share ? formatCentavos(share.amountCentavos) : "₱0.00"}
-                                </span>
+                                {share ? formatCentavos(share.amountCentavos) : "₱0.00"}
                                 {!isCreator && (
                                   <span className="text-[11px] text-accent-sand ml-1.5">
-                                    • Pending self-entry
+                                    • {t("bills.pendingEntryNotice")}
                                   </span>
                                 )}
                               </>
@@ -537,7 +536,7 @@ export function CreateBillModal({
                           </div>
                         ) : (
                           <span className="px-3 py-1.5 rounded-xl bg-bg-card border border-border-subtle font-mono text-caption text-text-tertiary shrink-0">
-                            Pending Entry
+                            {t("bills.pendingEntryBadge")}
                           </span>
                         )}
                       </div>
@@ -557,7 +556,7 @@ export function CreateBillModal({
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   ) : (
                     <>
-                      <span>Save & Split Bill</span>
+                      <span>{t("bills.createBillBtn")}</span>
                       <span className="font-mono text-body-sm font-normal">
                         ({amountPesos ? `₱${parseFloat(amountPesos).toFixed(2)}` : "₱0.00"})
                       </span>

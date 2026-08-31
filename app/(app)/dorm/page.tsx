@@ -11,6 +11,8 @@ import { JoinDormModal } from "@/components/dorm/JoinDormModal";
 import { InviteModal } from "@/components/dorm/InviteModal";
 import { MemberActionModal } from "@/components/dorm/MemberActionModal";
 import { LoadingSkeletonHero, LoadingSkeletonCard } from "@/components/ui/LoadingSkeleton";
+import { useTranslation } from "@/lib/context/LanguageContext";
+import { LanguageToggle } from "@/components/ui/LanguageToggle";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -46,6 +48,7 @@ export default function DormPage() {
     leaveDorm,
     switchActiveDorm,
   } = useDorm();
+  const { t } = useTranslation();
 
   // Modals state
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -77,17 +80,22 @@ export default function DormPage() {
   if (!activeDorm || dorms.length === 0) {
     return (
       <motion.div
-        className="px-5 pt-4 max-w-lg mx-auto"
+        className="px-5 pt-4 max-w-lg mx-auto space-y-6"
         style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 16px)" }}
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
-        <motion.div variants={itemVariants}>
-          <h1 className="text-heading-1 text-text-primary mb-1">Your Dorm</h1>
-          <p className="text-body-sm text-text-tertiary mb-6">
-            Manage your household and roommates
-          </p>
+        <motion.div variants={itemVariants} className="flex items-center justify-between">
+          <div>
+            <h1 className="text-heading-1 text-text-primary mb-1">
+              {t("dorm.title")}
+            </h1>
+            <p className="text-body-sm text-text-tertiary">
+              {t("dorm.subtitle")}
+            </p>
+          </div>
+          <LanguageToggle variant="header" />
         </motion.div>
 
         <motion.div
@@ -99,10 +107,10 @@ export default function DormPage() {
           </div>
 
           <h2 className="text-heading-2 text-text-primary font-semibold mb-2">
-            No Dorm Yet
+            {t("dorm.noDormTitle")}
           </h2>
           <p className="text-body-sm text-text-tertiary mb-8 max-w-[280px]">
-            Create a shared dorm to split recurring bills with roommates, or join with an invite code.
+            {t("dorm.noDormSub")}
           </p>
 
           <div className="flex flex-col gap-3.5 w-full max-w-[300px]">
@@ -110,15 +118,19 @@ export default function DormPage() {
               onClick={() => setIsCreateOpen(true)}
               className="btn-primary w-full py-3.5 flex items-center justify-center gap-2 shadow-lg shadow-accent-teal/10"
             >
-              <span>✨</span> Create a Dorm
+              <span>✨</span> {t("dorm.createDormBtn")}
             </button>
             <button
               onClick={() => setIsJoinOpen(true)}
               className="btn-secondary w-full py-3.5 flex items-center justify-center gap-2"
             >
-              <span>🔑</span> Join with Code
+              <span>🔑</span> {t("dorm.joinWithCodeBtn")}
             </button>
           </div>
+        </motion.div>
+
+        <motion.div variants={itemVariants}>
+          <LanguageToggle variant="card" />
         </motion.div>
 
         {/* Modals */}
@@ -181,12 +193,13 @@ export default function DormPage() {
             )}
           </div>
           <p className="text-body-sm text-text-tertiary">
-            Household Management • Currency: {activeDorm.currency} (₱)
+            {t("dorm.householdManagement", { currency: activeDorm.currency })}
           </p>
         </div>
 
-        {/* User Role Badge */}
+        {/* User Role Badge & Header Language Toggle */}
         <div className="flex items-center gap-2">
+          <LanguageToggle variant="header" />
           <span
             className={`px-3 py-1 rounded-full text-caption font-semibold uppercase tracking-wider ${
               isAdmin
@@ -194,7 +207,7 @@ export default function DormPage() {
                 : "bg-accent-teal/15 text-accent-teal border border-accent-teal/25"
             }`}
           >
-            {isAdmin ? "👑 Admin" : "👤 Member"}
+            {isAdmin ? t("dorm.adminBadge") : t("dorm.memberBadge")}
           </span>
         </div>
       </motion.div>
@@ -205,34 +218,9 @@ export default function DormPage() {
         </div>
       )}
 
-      {/* Overview Stats Cards */}
-      <motion.div variants={itemVariants} className="grid grid-cols-3 gap-3">
-        <div className="card p-3.5 text-center">
-          <span className="text-caption text-text-tertiary uppercase tracking-wider block mb-1">
-            Roommates
-          </span>
-          <p className="text-heading-2 font-mono font-bold text-text-primary">
-            {activeMembers.length}
-          </p>
-        </div>
-
-        <div className="card p-3.5 text-center">
-          <span className="text-caption text-text-tertiary uppercase tracking-wider block mb-1">
-            Active Codes
-          </span>
-          <p className="text-heading-2 font-mono font-bold text-accent-teal">
-            {activeInvites.filter((i) => !i.is_used).length}
-          </p>
-        </div>
-
-        <div className="card p-3.5 text-center">
-          <span className="text-caption text-text-tertiary uppercase tracking-wider block mb-1">
-            Currency
-          </span>
-          <p className="text-heading-2 font-mono font-bold text-accent-sand">
-            ₱ PHP
-          </p>
-        </div>
+      {/* Language Preferences Card */}
+      <motion.div variants={itemVariants}>
+        <LanguageToggle variant="card" />
       </motion.div>
 
       {/* Primary Actions */}
@@ -241,7 +229,7 @@ export default function DormPage() {
           onClick={() => setIsInviteOpen(true)}
           className="flex-1 btn-primary py-3.5 flex items-center justify-center gap-2 shadow-lg shadow-accent-teal/10"
         >
-          <span>✉️</span> Invite Roommates
+          <span>✉️</span> {t("dorm.inviteCodeCardTitle")}
         </button>
 
         <button
@@ -249,7 +237,7 @@ export default function DormPage() {
           className="btn-secondary py-3.5 px-4 flex items-center justify-center gap-1.5"
           title="Join another dorm"
         >
-          <span>🔑</span> Join Another
+          <span>🔑</span> {t("dorm.joinWithCodeBtn")}
         </button>
 
         <button
@@ -265,7 +253,7 @@ export default function DormPage() {
       <motion.div variants={itemVariants} className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-heading-3 font-semibold text-text-primary">
-            Roommates ({activeMembers.length})
+            {t("dorm.activeMembersTitle", { count: activeMembers.length })}
           </h2>
           {isAdmin && (
             <span className="text-caption text-text-tertiary">
@@ -280,7 +268,7 @@ export default function DormPage() {
             const displayName =
               member.profile?.display_name ||
               member.profile?.email ||
-              "Roommate";
+              t("common.roommate");
 
             return (
               <motion.div
@@ -314,7 +302,7 @@ export default function DormPage() {
                       {displayName}
                       {isMe && (
                         <span className="text-caption px-2 py-0.2 rounded-full bg-accent-teal/15 text-accent-teal shrink-0">
-                          You
+                          {t("common.you")}
                         </span>
                       )}
                     </p>
@@ -334,7 +322,7 @@ export default function DormPage() {
                         : "bg-bg-surface text-text-secondary border border-border-subtle"
                     }`}
                   >
-                    {member.role}
+                    {member.role === "admin" ? t("dorm.adminBadge") : t("dorm.memberBadge")}
                   </span>
 
                   {isAdmin && (
@@ -354,15 +342,15 @@ export default function DormPage() {
             onClick={() => setShowLeaveConfirm(true)}
             className="w-full py-3 text-body-sm font-medium text-accent-terracotta hover:bg-accent-terracotta/10 rounded-xl transition-colors text-center"
           >
-            Leave this Dorm...
+            {t("dorm.leaveDormBtn")}
           </button>
         ) : (
           <div className="p-4 rounded-2xl bg-accent-terracotta/10 border border-accent-terracotta/30 space-y-3">
             <p className="text-body-sm font-semibold text-text-primary text-center">
-              Are you sure you want to leave {activeDorm.name}?
+              {t("dorm.leaveConfirmTitle", { dorm: activeDorm.name })}
             </p>
             <p className="text-caption text-text-tertiary text-center">
-              You will lose access to active bills and upcoming splits.
+              {t("dorm.leaveConfirmSub")}
             </p>
             <div className="flex gap-2.5">
               <button
@@ -370,7 +358,7 @@ export default function DormPage() {
                 disabled={isLeaving}
                 className="flex-1 btn-secondary py-2 text-body-sm"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
               <button
                 onClick={async () => {
@@ -387,7 +375,7 @@ export default function DormPage() {
                 disabled={isLeaving}
                 className="flex-1 px-3 py-2 rounded-xl bg-accent-terracotta text-white font-medium text-body-sm hover:opacity-90 transition-opacity"
               >
-                {isLeaving ? "Leaving..." : "Yes, Leave"}
+                {isLeaving ? "Leaving..." : t("dorm.yesLeaveBtn")}
               </button>
             </div>
           </div>

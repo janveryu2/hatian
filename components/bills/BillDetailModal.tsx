@@ -6,6 +6,7 @@ import { SPRING } from "@/lib/utils/constants";
 import { formatCentavos } from "@/lib/utils/currency";
 import { daysBetween } from "@/lib/engine/split";
 import type { BillWithDetails } from "@/lib/hooks/useBills";
+import { useTranslation } from "@/lib/context/LanguageContext";
 
 interface BillDetailModalProps {
   isOpen: boolean;
@@ -36,6 +37,7 @@ export function BillDetailModal({
   onConfirmPaid,
   onDeleteBill,
 }: BillDetailModalProps) {
+  const { t } = useTranslation();
   const [processingShareId, setProcessingShareId] = useState<string | null>(
     null
   );
@@ -165,7 +167,7 @@ export function BillDetailModal({
                     {bill.category?.name || "Bill"}
                   </h2>
                   <p className="text-body-sm text-text-tertiary">
-                    {bill.billing_period_start} → {bill.billing_period_end} ({cycleDays} days)
+                    {bill.billing_period_start} → {bill.billing_period_end} ({t("bills.cycleDaysText", { days: cycleDays })})
                   </p>
                 </div>
               </div>
@@ -183,17 +185,18 @@ export function BillDetailModal({
               <div className="mb-4 px-3.5 py-2 rounded-xl bg-accent-sand/15 border border-accent-sand/30 flex items-center gap-2 text-caption text-accent-sand font-medium">
                 <span>⏳</span>
                 <span>
-                  Estimated shares: waiting on{" "}
-                  {bill.unconfirmedNames.length > 0
-                    ? bill.unconfirmedNames.join(", ")
-                    : "roommates"}{" "}
-                  to enter days
+                  {t("bills.provisionalBanner", {
+                    names:
+                      bill.unconfirmedNames.length > 0
+                        ? bill.unconfirmedNames.join(", ")
+                        : t("common.roommates"),
+                  })}
                 </span>
               </div>
             ) : (
               <div className="mb-4 px-3.5 py-1.5 rounded-xl bg-accent-teal/10 border border-accent-teal/20 flex items-center gap-2 text-caption text-accent-teal font-medium">
                 <span>✓</span>
-                <span>Final split: all roommate days confirmed</span>
+                <span>{t("bills.finalizedBanner")}</span>
               </div>
             )}
 
@@ -219,29 +222,32 @@ export function BillDetailModal({
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <span className="text-caption font-semibold uppercase tracking-wider block text-text-secondary">
-                      {bill.isProvisional ? "Your Estimated Share" : "Your Share Owed"}
+                      {bill.isProvisional ? t("bills.yourEstimatedShare") : t("bills.yourShareOwed")}
                     </span>
                     <p className="text-heading-2 font-mono font-bold text-text-primary">
                       {formatCentavos(myShare.amount_owed_centavos)}
                     </p>
                     <p className="text-caption text-text-tertiary mt-0.5">
-                      Based on {myShare.days_present ?? cycleDays} of {cycleDays} days present
+                      {t("bills.basedOnDays", {
+                        days: myShare.days_present ?? cycleDays,
+                        total: cycleDays,
+                      })}
                     </p>
                   </div>
 
                   <div className="shrink-0 flex items-center gap-2">
                     {isMyShareConfirmed ? (
                       <span className="px-3.5 py-1.5 rounded-xl bg-accent-teal text-white text-body-sm font-semibold flex items-center gap-1.5 shadow-sm">
-                        <span>✓</span> Settled
+                        <span>✓</span> {t("bills.settledBadge")}
                       </span>
                     ) : isMySharePaid ? (
                       <span className="px-3.5 py-1.5 rounded-xl bg-accent-sand/20 text-accent-sand text-body-sm font-semibold">
-                        Sent • Pending Confirm
+                        {t("bills.sentPendingConfirm")}
                       </span>
                     ) : isMyShareAcknowledged ? (
                       <div className="flex items-center gap-2">
                         <span className="text-caption px-2.5 py-1 rounded-xl bg-accent-teal/15 text-accent-teal font-semibold">
-                          Will Pay Later
+                          {t("bills.willPayLaterBadge")}
                         </span>
                         <button
                           type="button"
@@ -249,7 +255,7 @@ export function BillDetailModal({
                           disabled={processingShareId === myShare.id}
                           className="btn-primary py-2 px-3 text-caption font-bold shadow-sm"
                         >
-                          Mark Paid →
+                          {t("bills.markPaidButton")} →
                         </button>
                       </div>
                     ) : (
@@ -260,7 +266,7 @@ export function BillDetailModal({
                           disabled={processingShareId === myShare.id}
                           className="px-3 py-2 rounded-xl bg-bg-surface border border-border-subtle text-text-secondary hover:text-text-primary text-caption font-semibold transition-colors"
                         >
-                          Pay Later
+                          {t("bills.payLaterButton")}
                         </button>
                         <button
                           type="button"
@@ -269,10 +275,10 @@ export function BillDetailModal({
                           className="btn-primary py-2 px-3.5 text-body-sm font-bold shadow-md shadow-accent-teal/20 flex items-center gap-1"
                         >
                           {processingShareId === myShare.id ? (
-                            "Updating..."
+                            t("bills.markingPaid")
                           ) : (
                             <>
-                              <span>Mark Paid</span>
+                              <span>{t("bills.markPaidButton")}</span>
                               <span>→</span>
                             </>
                           )}
@@ -288,7 +294,7 @@ export function BillDetailModal({
             <div className="grid grid-cols-2 gap-3 mb-5">
               <div className="p-3.5 rounded-xl bg-bg-surface border border-border-subtle">
                 <span className="text-caption text-text-tertiary uppercase block mb-0.5">
-                  Total Bill
+                  {t("bills.totalBill")}
                 </span>
                 <span className="text-heading-3 font-mono font-bold text-text-primary">
                   {formatCentavos(bill.amount_centavos)}
@@ -296,13 +302,13 @@ export function BillDetailModal({
               </div>
               <div className="p-3.5 rounded-xl bg-bg-surface border border-border-subtle">
                 <span className="text-caption text-text-tertiary uppercase block mb-0.5">
-                  Fronted By
+                  {t("bills.frontedBy")}
                 </span>
                 <span className="text-body-md font-semibold text-text-primary truncate block">
                   {bill.payerProfile?.display_name ||
                     bill.payerProfile?.email ||
-                    "Roommate"}
-                  {isPayer && " (You)"}
+                    t("common.roommate")}
+                  {isPayer && ` (${t("common.you")})`}
                 </span>
               </div>
             </div>
@@ -312,10 +318,10 @@ export function BillDetailModal({
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-caption font-semibold uppercase text-text-secondary">
-                    Roommate Days & Shares ({bill.shares.length})
+                    {t("bills.roommateDaysAndShares", { count: bill.shares.length })}
                   </h3>
                   <p className="text-caption text-text-tertiary">
-                    Enter your days present — all shares recalculate live
+                    {t("bills.daysHelperText")}
                   </p>
                 </div>
               </div>
@@ -359,7 +365,7 @@ export function BillDetailModal({
                               {share.userName}
                               {isShareOwner && (
                                 <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-accent-teal/15 text-accent-teal">
-                                  You
+                                  {t("common.you")}
                                 </span>
                               )}
                             </p>
@@ -373,7 +379,7 @@ export function BillDetailModal({
                         <div className="shrink-0">
                           {isConfirmed ? (
                             <span className="px-2.5 py-1 rounded-full bg-accent-teal/15 text-accent-teal text-caption font-semibold">
-                              ✓ Confirmed
+                              ✓ {t("bills.confirmedDaysBadge")}
                             </span>
                           ) : isPaid ? (
                             isPayer || isAdmin ? (
@@ -383,16 +389,16 @@ export function BillDetailModal({
                                 disabled={isBusy}
                                 className="btn-primary py-1 px-3 text-caption font-semibold shadow-sm"
                               >
-                                {isBusy ? "..." : "Confirm Received ✓"}
+                                {isBusy ? "..." : t("bills.confirmReceivedButton")}
                               </button>
                             ) : (
                               <span className="px-2.5 py-1 rounded-full bg-accent-sand/20 text-accent-sand text-caption font-medium">
-                                Pending Confirm
+                                {t("bills.pendingStatus")}
                               </span>
                             )
                           ) : isAcknowledged ? (
                             <span className="px-2.5 py-1 rounded-full bg-accent-teal/10 text-accent-teal text-caption font-medium">
-                              Will pay later
+                              {t("bills.willPayLaterBadge")}
                             </span>
                           ) : isShareOwner ? (
                             <div className="flex items-center gap-1.5">
@@ -402,7 +408,7 @@ export function BillDetailModal({
                                 disabled={isBusy}
                                 className="px-2 py-1 rounded-lg bg-bg-card border border-border-subtle text-caption text-text-secondary hover:text-text-primary font-medium transition-colors"
                               >
-                                Pay Later
+                                {t("bills.payLaterButton")}
                               </button>
                               <button
                                 type="button"
@@ -410,12 +416,12 @@ export function BillDetailModal({
                                 disabled={isBusy}
                                 className="btn-primary py-1 px-2.5 text-caption font-semibold"
                               >
-                                {isBusy ? "..." : "Mark Paid"}
+                                {isBusy ? "..." : t("bills.markPaidButton")}
                               </button>
                             </div>
                           ) : (
                             <span className="px-2.5 py-1 rounded-full bg-accent-coral/15 text-accent-coral text-caption font-medium">
-                              Unpaid
+                              {t("bills.filterUnpaid")}
                             </span>
                           )}
                         </div>
@@ -425,15 +431,15 @@ export function BillDetailModal({
                       <div className="pt-2 border-t border-border-subtle/50 flex items-center justify-between">
                         <div className="flex items-center gap-1.5">
                           <span className="text-caption text-text-tertiary">
-                            Days Present:
+                            {t("bills.daysPresentTitle")}:
                           </span>
                           {share.is_days_confirmed ? (
                             <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-accent-teal/10 text-accent-teal font-medium">
-                              Confirmed
+                              {t("bills.confirmedDaysBadge")}
                             </span>
                           ) : (
                             <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-accent-sand/15 text-accent-sand font-medium">
-                              Pending Entry
+                              {t("bills.pendingEntryBadge")}
                             </span>
                           )}
                         </div>
@@ -463,8 +469,8 @@ export function BillDetailModal({
                         ) : (
                           <span className="px-2.5 py-1 rounded-lg bg-bg-card border border-border-subtle font-mono text-caption font-bold text-text-secondary">
                             {share.is_days_confirmed
-                              ? `${days} of ${cycleDays} days`
-                              : `Not yet entered`}
+                              ? t("bills.daysCount", { days, total: cycleDays })
+                              : t("bills.notYetEntered")}
                           </span>
                         )}
                       </div>
@@ -483,12 +489,12 @@ export function BillDetailModal({
                     onClick={() => setShowDeleteConfirm(true)}
                     className="w-full py-2 text-body-sm font-medium text-accent-terracotta hover:bg-accent-terracotta/10 rounded-xl transition-colors text-center"
                   >
-                    Delete this Bill...
+                    {t("bills.deleteBill")}
                   </button>
                 ) : (
                   <div className="p-3.5 rounded-xl bg-accent-terracotta/10 border border-accent-terracotta/30 text-center space-y-2">
                     <p className="text-body-sm font-semibold text-text-primary">
-                      Delete this bill permanently?
+                      {t("bills.deleteConfirmTitle")}
                     </p>
                     <div className="flex gap-2">
                       <button
@@ -497,7 +503,7 @@ export function BillDetailModal({
                         disabled={isDeleting}
                         className="flex-1 btn-secondary py-1.5 text-body-sm"
                       >
-                        Cancel
+                        {t("common.cancel")}
                       </button>
                       <button
                         type="button"
@@ -505,7 +511,7 @@ export function BillDetailModal({
                         disabled={isDeleting}
                         className="flex-1 px-3 py-1.5 rounded-xl bg-accent-terracotta text-white font-medium text-body-sm"
                       >
-                        {isDeleting ? "Deleting..." : "Yes, Delete"}
+                        {isDeleting ? t("bills.deletingBtn") : t("bills.deleteConfirmBtn")}
                       </button>
                     </div>
                   </div>

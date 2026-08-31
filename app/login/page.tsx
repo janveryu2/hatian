@@ -4,9 +4,12 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { SPRING } from "@/lib/utils/constants";
+import { useTranslation } from "@/lib/context/LanguageContext";
+import { LanguageToggle } from "@/components/ui/LanguageToggle";
 
 export default function LoginPage() {
   const { signInWithGoogle } = useAuth();
+  const { language } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,6 +27,11 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-dvh flex flex-col bg-bg-primary relative overflow-hidden">
+      {/* Top right language toggle */}
+      <div className="absolute top-4 right-4 z-20">
+        <LanguageToggle variant="header" />
+      </div>
+
       {/* Decorative background shapes */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <motion.div
@@ -102,12 +110,14 @@ export default function LoginPage() {
             Hatian
           </motion.h1>
           <motion.p
-            className="text-body text-text-secondary text-center mt-2 max-w-[260px]"
+            className="text-body text-text-secondary text-center mt-2 max-w-[280px]"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ ...SPRING.page, delay: 0.4 }}
           >
-            Split bills fairly with your dorm-mates. No more groupchat math.
+            {language === "tl"
+              ? "Patas na hatian sa kuryente at tubig sa dorm. Wala nang gulo sa group chat."
+              : "Split bills fairly with your dorm-mates. No more groupchat math."}
           </motion.p>
         </motion.div>
 

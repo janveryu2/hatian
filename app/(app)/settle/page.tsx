@@ -9,6 +9,8 @@ import { useDorm } from "@/lib/hooks/useDorm";
 import { useSettlement } from "@/lib/hooks/useSettlement";
 import { RecordPaymentModal } from "@/components/settle/RecordPaymentModal";
 import { LoadingSkeletonHero, LoadingSkeletonCard } from "@/components/ui/LoadingSkeleton";
+import { useTranslation } from "@/lib/context/LanguageContext";
+import { LanguageToggle } from "@/components/ui/LanguageToggle";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -45,6 +47,7 @@ export default function SettlePage() {
     recordPayment,
     confirmPayment,
   } = useSettlement();
+  const { t } = useTranslation();
 
   const [isRecordOpen, setIsRecordOpen] = useState(false);
   const [selectedPayeeId, setSelectedPayeeId] = useState<string>("");
@@ -120,31 +123,34 @@ export default function SettlePage() {
       {/* Top Header */}
       <motion.div
         variants={itemVariants}
-        className="flex items-center justify-between"
+        className="flex items-center justify-between gap-2"
       >
         <div>
           <h1 className="text-heading-1 font-bold text-text-primary tracking-tight">
-            Settle Up
+            {t("settle.title")}
           </h1>
           <p className="text-body-sm text-text-tertiary">
             {activeDorm
-              ? `${activeDorm.name} • Debt Simplification`
-              : "Clear balances between roommates"}
+              ? t("settle.subtitle", { dorm: activeDorm.name })
+              : t("settle.noDormSub")}
           </p>
         </div>
 
-        {activeDorm && (
-          <button
-            onClick={() => {
-              setSelectedPayeeId("");
-              setSelectedPayeeAmountPesos("");
-              setIsRecordOpen(true);
-            }}
-            className="btn-primary py-2.5 px-4 text-body-sm flex items-center gap-1.5 shadow-lg shadow-accent-teal/15"
-          >
-            <span>💸</span> Record Payment
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          <LanguageToggle variant="header" />
+          {activeDorm && (
+            <button
+              onClick={() => {
+                setSelectedPayeeId("");
+                setSelectedPayeeAmountPesos("");
+                setIsRecordOpen(true);
+              }}
+              className="btn-primary py-2.5 px-3.5 text-body-sm flex items-center gap-1.5 shadow-lg shadow-accent-teal/15"
+            >
+              <span>💸</span> {t("settle.recordPaymentBtn")}
+            </button>
+          )}
+        </div>
       </motion.div>
 
       {error && (
@@ -157,10 +163,10 @@ export default function SettlePage() {
         <div className="card p-8 text-center space-y-3">
           <span className="text-4xl block">🏠</span>
           <p className="text-body-md font-semibold text-text-primary">
-            No Dorm Selected
+            {t("settle.noDormTitle")}
           </p>
           <p className="text-body-sm text-text-tertiary max-w-[260px] mx-auto">
-            Create or join a dorm to track balances and settle debts.
+            {t("settle.noDormSub")}
           </p>
         </div>
       ) : (
@@ -179,7 +185,7 @@ export default function SettlePage() {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-caption text-text-tertiary uppercase tracking-wider mb-1">
-                  Your Net Balance
+                  {t("settle.yourNetBalance")}
                 </p>
                 <p
                   className="text-heading-1 font-mono font-bold tracking-tight"
@@ -196,10 +202,10 @@ export default function SettlePage() {
                 </p>
                 <p className="text-body-sm text-text-secondary mt-1">
                   {isOwed
-                    ? "🎉 Roommates owe you in total"
+                    ? `🎉 ${t("settle.roommatesOweYou")}`
                     : owes
-                    ? "⚠️ You have outstanding shares to pay"
-                    : "✨ You are completely settled up!"}
+                    ? `⚠️ ${t("settle.youHaveDebts")}`
+                    : `✨ ${t("settle.completelySettled")}`}
                 </p>
               </div>
 
@@ -218,7 +224,7 @@ export default function SettlePage() {
               <div className="flex items-center gap-2">
                 <span className="text-xl">🔔</span>
                 <p className="text-body-sm font-semibold text-text-primary">
-                  Payments Waiting for Your Confirmation ({pendingIncomingPayments.length})
+                  {t("settle.pendingIncomingTitle", { count: pendingIncomingPayments.length })}
                 </p>
               </div>
 
@@ -230,7 +236,10 @@ export default function SettlePage() {
                   >
                     <div>
                       <p className="font-medium text-text-primary">
-                        {p.fromName} sent {formatCentavos(p.amount_centavos)}
+                        {t("settle.pendingIncomingSub", {
+                          name: p.fromName,
+                          amount: formatCentavos(p.amount_centavos),
+                        })}
                       </p>
                       {p.note && (
                         <p className="text-caption text-text-tertiary">
@@ -245,8 +254,8 @@ export default function SettlePage() {
                       className="btn-primary py-1.5 px-3 text-caption shrink-0"
                     >
                       {confirmingPaymentId === p.id
-                        ? "Confirming..."
-                        : "Confirm Receipt ✓"}
+                        ? t("settle.confirmingBtn")
+                        : t("settle.confirmReceiptBtn")}
                     </button>
                   </div>
                 ))}
@@ -263,7 +272,7 @@ export default function SettlePage() {
               <div className="flex items-center gap-2">
                 <span className="text-xl">⏳</span>
                 <p className="text-body-sm font-semibold text-text-primary">
-                  Payments Waiting for Roommate Confirmation ({pendingOutgoingPayments.length})
+                  {t("settle.pendingOutgoingTitle", { count: pendingOutgoingPayments.length })}
                 </p>
               </div>
 
@@ -275,7 +284,7 @@ export default function SettlePage() {
                   >
                     <div>
                       <p className="font-medium text-text-primary">
-                        You sent {formatCentavos(p.amount_centavos)} to {p.toName}
+                        {t("settle.youPay", { name: p.toName })} ({formatCentavos(p.amount_centavos)})
                       </p>
                       {p.note && (
                         <p className="text-caption text-text-tertiary">
@@ -284,7 +293,7 @@ export default function SettlePage() {
                       )}
                     </div>
                     <span className="text-caption px-2.5 py-1 rounded-full bg-accent-sand/20 text-accent-sand font-medium shrink-0">
-                      Waiting on {p.toName}
+                      {t("settle.waitingOnRoommate", { name: p.toName })}
                     </span>
                   </div>
                 ))}
@@ -296,16 +305,19 @@ export default function SettlePage() {
           <motion.div variants={itemVariants} className="space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-heading-3 font-semibold text-text-primary">
-                Smart Settle Plan
+                {t("settle.smartSettlePlan")}
               </h2>
               <span className="text-caption px-2 py-0.5 rounded-full bg-accent-teal/15 text-accent-teal font-medium">
-                {simplifiedPlan.length} {simplifiedPlan.length === 1 ? "Payment" : "Payments"} Needed
+                {t("settle.paymentsNeeded", {
+                  count: simplifiedPlan.length,
+                  word: simplifiedPlan.length === 1 ? "Bayaran" : "Bayaran",
+                })}
               </span>
             </div>
 
             {simplifiedPlan.length === 0 ? (
               <div className="card p-6 text-center text-text-tertiary text-body-sm">
-                🤝 No debts to settle! All roommate balances are ₱0.00.
+                🤝 {t("settle.noDebtsToSettle")}
               </div>
             ) : (
               <div className="space-y-2.5">
@@ -317,11 +329,11 @@ export default function SettlePage() {
                   const isMeReceiver = planItem.toMember === myMemberId;
 
                   const fromName = isMeSender
-                    ? "You"
-                    : fromMem?.profile?.display_name || "Roommate";
+                    ? t("common.you")
+                    : fromMem?.profile?.display_name || t("common.roommate");
                   const toName = isMeReceiver
-                    ? "You"
-                    : toMem?.profile?.display_name || "Roommate";
+                    ? t("common.you")
+                    : toMem?.profile?.display_name || t("common.roommate");
 
                   const pendingOutgoing = isMeSender
                     ? pendingOutgoingPayments.find(
@@ -346,13 +358,18 @@ export default function SettlePage() {
                         </span>
                         <div className="min-w-0">
                           <p className="text-body-md font-semibold text-text-primary truncate">
-                            <span className={isMeSender ? "text-accent-coral" : ""}>
-                              {fromName}
-                            </span>{" "}
-                            {isMeSender ? "pay" : "pays"}{" "}
-                            <span className={isMeReceiver ? "text-accent-teal" : ""}>
-                              {toName}
-                            </span>
+                            {isMeSender ? (
+                              <span className="text-accent-coral">
+                                {t("settle.youPay", { name: toName })}
+                              </span>
+                            ) : (
+                              <span>
+                                {t("settle.someonePays", {
+                                  from: fromName,
+                                  to: toName,
+                                })}
+                              </span>
+                            )}
                           </p>
                           <p className="text-currency-md font-mono font-bold text-text-primary">
                             {formatCentavos(planItem.amountCentavos)}
@@ -365,7 +382,7 @@ export default function SettlePage() {
                         pendingOutgoing ? (
                           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-accent-sand/15 border border-accent-sand/30 text-accent-sand text-caption font-semibold shrink-0">
                             <span>⏳</span>
-                            <span>Pending Confirm</span>
+                            <span>{t("settle.pendingConfirmPill")}</span>
                           </div>
                         ) : (
                           <button
@@ -378,7 +395,7 @@ export default function SettlePage() {
                             }
                             className="btn-primary py-2 px-3.5 text-caption font-semibold shrink-0 shadow-md shadow-accent-teal/20"
                           >
-                            Pay Now →
+                            {t("settle.payNowBtn")}
                           </button>
                         )
                       )}
@@ -392,7 +409,7 @@ export default function SettlePage() {
           {/* Roommate Net Balances Table */}
           <motion.div variants={itemVariants} className="space-y-3">
             <h2 className="text-heading-3 font-semibold text-text-primary">
-              All Roommate Balances
+              {t("settle.allBalancesTitle")}
             </h2>
 
             <div className="card p-2 divide-y divide-border-subtle">
@@ -400,7 +417,7 @@ export default function SettlePage() {
                 const bal = netBalances.get(m.id) || 0;
                 const isMe = m.id === myMemberId;
                 const name =
-                  m.profile?.display_name || m.profile?.email || "Roommate";
+                  m.profile?.display_name || m.profile?.email || t("common.roommate");
 
                 return (
                   <div
@@ -421,7 +438,7 @@ export default function SettlePage() {
                         )}
                       </div>
                       <span className="font-medium text-text-primary">
-                        {name} {isMe ? "(You)" : ""}
+                        {name} {isMe ? `(${t("common.you")})` : ""}
                       </span>
                     </div>
 

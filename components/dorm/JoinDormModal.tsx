@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SPRING } from "@/lib/utils/constants";
 import { normalizeInviteCode, formatDisplayCode } from "@/lib/utils/invite";
 import type { Dorm, DormInvite } from "@/lib/supabase/types";
+import { useTranslation } from "@/lib/context/LanguageContext";
 
 interface JoinDormModalProps {
   isOpen: boolean;
@@ -26,6 +27,7 @@ export function JoinDormModal({
   onValidate,
   onJoin,
 }: JoinDormModalProps) {
+  const { t } = useTranslation();
   const [rawCode, setRawCode] = useState(initialCode);
   const [moveInDate, setMoveInDate] = useState(
     new Date().toISOString().split("T")[0]
@@ -133,10 +135,10 @@ export function JoinDormModal({
                 </span>
                 <div>
                   <h2 className="text-heading-3 font-semibold text-text-primary">
-                    Join a Dorm
+                    {t("dorm.joinWithCodeBtn")}
                   </h2>
                   <p className="text-body-sm text-text-tertiary">
-                    Enter the invite code from your roommate
+                    {t("dorm.inviteCodeSub")}
                   </p>
                 </div>
               </div>
@@ -162,7 +164,7 @@ export function JoinDormModal({
             <form onSubmit={handleJoinSubmit} className="space-y-4">
               <div>
                 <label className="block text-body-sm font-medium text-text-secondary mb-1.5">
-                  Invite Code
+                  {t("dorm.inviteCodeCardTitle")}
                 </label>
                 <div className="relative">
                   <input
@@ -234,7 +236,7 @@ export function JoinDormModal({
                   disabled={isJoining}
                   className="flex-1 btn-secondary"
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </button>
                 <button
                   type="submit"
@@ -247,7 +249,7 @@ export function JoinDormModal({
                       Joining...
                     </>
                   ) : (
-                    "Join Dorm"
+                    t("dorm.joinWithCodeBtn")
                   )}
                 </button>
               </div>

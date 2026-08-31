@@ -11,6 +11,8 @@ import { formatCentavos } from "@/lib/utils/currency";
 import { SPRING, STAGGER_DELAY } from "@/lib/utils/constants";
 
 import { LoadingSkeletonHero, LoadingSkeletonCard } from "@/components/ui/LoadingSkeleton";
+import { useTranslation } from "@/lib/context/LanguageContext";
+import { LanguageToggle } from "@/components/ui/LanguageToggle";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -37,6 +39,7 @@ export default function HomePage() {
   const { activeDorm, members, isLoading: isDormLoading } = useDorm();
   const { bills } = useBills();
   const { myNetBalance, payments } = useSettlement();
+  const { t } = useTranslation();
 
   if (isDormLoading) {
     return (
@@ -67,6 +70,15 @@ export default function HomePage() {
   const upcomingBills = bills.filter((b) => !b.isFullySettled).slice(0, 3);
   const recentPayments = payments.slice(0, 3);
 
+  // Dynamic localized greeting
+  const hour = new Date().getHours();
+  const greetingText =
+    hour < 12
+      ? t("home.greetingMorning")
+      : hour < 18
+      ? t("home.greetingAfternoon")
+      : t("home.greetingEvening");
+
   return (
     <motion.div
       className="px-5 pt-4 max-w-xl mx-auto space-y-6"
@@ -75,26 +87,29 @@ export default function HomePage() {
       initial="hidden"
       animate="visible"
     >
-      {/* Greeting Header */}
-      <motion.div variants={itemVariants} className="flex items-start justify-between">
+      {/* Greeting Header with Language Toggle */}
+      <motion.div variants={itemVariants} className="flex items-start justify-between gap-2">
         <div>
           <p className="text-body-sm text-text-tertiary">{formatToday()}</p>
           <h1 className="text-heading-1 font-bold text-text-primary tracking-tight mt-0.5">
-            {getGreeting()}, {firstName}!
+            {greetingText}, {firstName}!
           </h1>
         </div>
 
-        {activeDorm && (
-          <Link
-            href="/dorm"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-bg-surface border border-border-subtle hover:border-accent-teal/40 transition-colors"
-          >
-            <span className="text-body-sm">🏠</span>
-            <span className="text-body-sm font-medium text-text-primary max-w-[120px] truncate">
-              {activeDorm.name}
-            </span>
-          </Link>
-        )}
+        <div className="flex items-center gap-2">
+          <LanguageToggle variant="header" />
+          {activeDorm && (
+            <Link
+              href="/dorm"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-bg-surface border border-border-subtle hover:border-accent-teal/40 transition-colors"
+            >
+              <span className="text-body-sm">🏠</span>
+              <span className="text-body-sm font-medium text-text-primary max-w-[100px] truncate">
+                {activeDorm.name}
+              </span>
+            </Link>
+          )}
+        </div>
       </motion.div>
 
       {/* No Dorm Alert Banner */}
@@ -107,10 +122,10 @@ export default function HomePage() {
             <span className="text-3xl p-2 rounded-2xl bg-accent-teal/20">🏠</span>
             <div>
               <p className="text-body-md font-semibold text-text-primary">
-                Join or Create a Dorm
+                {t("home.joinOrCreateDorm")}
               </p>
               <p className="text-body-sm text-text-tertiary">
-                Set up your household to start splitting bills
+                {t("home.joinOrCreateSub")}
               </p>
             </div>
           </div>
@@ -118,7 +133,7 @@ export default function HomePage() {
             href="/dorm"
             className="btn-primary py-2.5 px-5 text-body-sm shrink-0 w-full sm:w-auto text-center"
           >
-            Get Started →
+            {t("home.getStarted")}
           </Link>
         </motion.div>
       )}
@@ -131,7 +146,7 @@ export default function HomePage() {
           style={{ borderLeft: "3px solid var(--accent-coral)" }}
         >
           <span className="text-caption text-text-tertiary uppercase tracking-wider">
-            You Owe
+            {t("home.youOwe")}
           </span>
           <span
             className="text-currency-lg font-mono font-bold"
@@ -140,7 +155,7 @@ export default function HomePage() {
             {formatCentavos(youOweCentavos)}
           </span>
           <span className="text-caption text-text-tertiary">
-            {youOweCentavos === 0 ? "All settled up" : "Tap to Settle Up →"}
+            {youOweCentavos === 0 ? t("home.allSettledUp") : t("home.outstandingShares")}
           </span>
         </Link>
 
@@ -150,7 +165,7 @@ export default function HomePage() {
           style={{ borderLeft: "3px solid var(--accent-teal)" }}
         >
           <span className="text-caption text-text-tertiary uppercase tracking-wider">
-            Owed to You
+            {t("home.owedToYou")}
           </span>
           <span
             className="text-currency-lg font-mono font-bold"
@@ -159,7 +174,7 @@ export default function HomePage() {
             {formatCentavos(owedToYouCentavos)}
           </span>
           <span className="text-caption text-text-tertiary">
-            {owedToYouCentavos === 0 ? "No pending claims" : "From roommates"}
+            {owedToYouCentavos === 0 ? t("home.allSettledUp") : t("home.fromRoommates")}
           </span>
         </Link>
       </motion.div>
@@ -190,9 +205,11 @@ export default function HomePage() {
             </div>
             <div>
               <p className="text-body-sm font-medium text-text-primary">
-                {activeMembers.length} {activeMembers.length === 1 ? "Roommate" : "Roommates"}
+                {t("home.roommatesInDorm", {
+                  count: activeMembers.length,
+                  dorm: activeDorm.name,
+                })}
               </p>
-              <p className="text-caption text-text-tertiary">In {activeDorm.name}</p>
             </div>
           </div>
 
@@ -200,7 +217,7 @@ export default function HomePage() {
             href="/dorm"
             className="text-body-sm text-accent-teal font-medium hover:underline flex items-center gap-1"
           >
-            Manage Dorm ›
+            {t("home.manageDorm")}
           </Link>
         </motion.div>
       )}
@@ -209,13 +226,13 @@ export default function HomePage() {
       <motion.div variants={itemVariants} className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-heading-3 font-semibold text-text-primary">
-            Upcoming Bills
+            {t("home.upcomingBills")}
           </h2>
           <Link
             href="/bills"
             className="text-body-sm text-accent-teal font-medium hover:underline"
           >
-            View all ({bills.length}) ›
+            {t("home.viewAll", { count: bills.length })}
           </Link>
         </div>
 
@@ -223,10 +240,10 @@ export default function HomePage() {
           <div className="card p-6 flex flex-col items-center text-center">
             <div className="text-3xl mb-2">📋</div>
             <p className="text-body-sm text-text-secondary font-medium">
-              No unpaid bills
+              {t("home.noUpcomingBills")}
             </p>
             <p className="text-caption text-text-tertiary mt-0.5">
-              Everything is settled up or add a new bill in the Bills tab
+              {t("home.noUpcomingBillsSub")}
             </p>
           </div>
         ) : (
@@ -250,7 +267,7 @@ export default function HomePage() {
                         {b.category?.name || "Bill"}
                       </p>
                       <p className="text-caption text-text-tertiary">
-                        Due {b.due_date} • Total {formatCentavos(b.amount_centavos)}
+                        {t("bills.due", { date: b.due_date })} • Total {formatCentavos(b.amount_centavos)}
                       </p>
                     </div>
                   </div>
@@ -258,7 +275,7 @@ export default function HomePage() {
                   <div className="text-right shrink-0">
                     {isPayer ? (
                       <span className="text-caption font-semibold text-accent-teal px-2 py-0.5 rounded-full bg-accent-teal/10">
-                        You fronted
+                        {t("bills.youFronted")}
                       </span>
                     ) : myShare ? (
                       <div>
@@ -267,10 +284,10 @@ export default function HomePage() {
                         </p>
                         <span className="text-caption text-text-tertiary">
                           {myShare.payment_status === "confirmed"
-                            ? "✓ Settled"
+                            ? "✓ " + t("bills.paidStatus")
                             : myShare.payment_status === "paid"
-                            ? "Pending"
-                            : "You owe"}
+                            ? t("bills.pendingStatus")
+                            : t("home.youOwe")}
                         </span>
                       </div>
                     ) : (
@@ -290,13 +307,13 @@ export default function HomePage() {
       <motion.div variants={itemVariants} className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-heading-3 font-semibold text-text-primary">
-            Recent Settle Activity
+            {t("home.recentSettleActivity")}
           </h2>
           <Link
             href="/settle"
             className="text-body-sm text-accent-teal font-medium hover:underline"
           >
-            Settle Hub ›
+            {t("home.settleHub")}
           </Link>
         </div>
 
@@ -304,10 +321,10 @@ export default function HomePage() {
           <div className="card p-6 flex flex-col items-center text-center">
             <div className="text-3xl mb-2">✨</div>
             <p className="text-body-sm text-text-secondary font-medium">
-              No recent settlements
+              {t("home.noRecentSettlements")}
             </p>
             <p className="text-caption text-text-tertiary mt-0.5">
-              Settlements via GCash, Maya, or bank transfers will show here
+              {t("home.settlementsSub")}
             </p>
           </div>
         ) : (
@@ -330,7 +347,7 @@ export default function HomePage() {
                     {formatCentavos(p.amount_centavos)}
                   </p>
                   <span className="text-caption text-accent-sage font-medium">
-                    {p.status === "confirmed" ? "Confirmed ✓" : "Pending"}
+                    {p.status === "confirmed" ? "✓ " + t("bills.confirmedDaysBadge") : t("bills.pendingStatus")}
                   </span>
                 </div>
               </div>

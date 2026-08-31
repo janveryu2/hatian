@@ -40,6 +40,7 @@ export const viewport: Viewport = {
 };
 
 import { AuthProvider } from "@/lib/context/AuthContext";
+import { LanguageProvider } from "@/lib/context/LanguageContext";
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
@@ -50,7 +51,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-dvh bg-bg-primary text-text-primary font-sans antialiased">
         <AuthProvider>
-          <ThemeProvider>{children}</ThemeProvider>
+          <LanguageProvider>
+            <ThemeProvider>{children}</ThemeProvider>
+          </LanguageProvider>
         </AuthProvider>
       </body>
     </html>

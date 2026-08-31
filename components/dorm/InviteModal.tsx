@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SPRING } from "@/lib/utils/constants";
 import { formatDisplayCode, isInviteExpired } from "@/lib/utils/invite";
 import type { DormInvite } from "@/lib/supabase/types";
+import { useTranslation } from "@/lib/context/LanguageContext";
 
 interface InviteModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export function InviteModal({
   onClose,
   onGenerateNew,
 }: InviteModalProps) {
+  const { t } = useTranslation();
   const [copiedType, setCopiedType] = useState<"code" | "link" | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -116,10 +118,10 @@ export function InviteModal({
                 </span>
                 <div>
                   <h2 className="text-heading-3 font-semibold text-text-primary">
-                    Invite Roommates
+                    {t("dorm.inviteCodeCardTitle")}
                   </h2>
                   <p className="text-body-sm text-text-tertiary">
-                    Share with dorm members for {dormName}
+                    {t("dorm.inviteCodeSub")}
                   </p>
                 </div>
               </div>
@@ -150,7 +152,7 @@ export function InviteModal({
                   </div>
 
                   <p className="text-caption text-text-tertiary uppercase tracking-wider mb-2">
-                    Roommate Invite Code
+                    {t("dorm.inviteCodeCardTitle")}
                   </p>
                   <p className="text-heading-1 font-mono font-bold text-accent-teal tracking-widest my-2 select-all">
                     {currentCode}
@@ -168,10 +170,10 @@ export function InviteModal({
                     className="btn-secondary flex items-center justify-center gap-2 py-3"
                   >
                     {copiedType === "code" ? (
-                      <span className="text-accent-teal font-medium">✓ Code Copied!</span>
+                      <span className="text-accent-teal font-medium">{t("dorm.copiedBtn")}</span>
                     ) : (
                       <>
-                        <span>📋</span> Copy Code
+                        <span>📋</span> {t("dorm.copyCodeBtn")}
                       </>
                     )}
                   </button>
@@ -197,7 +199,7 @@ export function InviteModal({
                   No active invite code
                 </p>
                 <p className="text-body-sm text-text-tertiary max-w-[260px] mx-auto">
-                  Generate a new 6-character code to share with your roommates
+                  {t("dorm.inviteCodeSub")}
                 </p>
                 <button
                   type="button"
@@ -211,7 +213,7 @@ export function InviteModal({
                       Generating...
                     </>
                   ) : (
-                    "Generate Invite Code"
+                    t("dorm.newCodeBtn")
                   )}
                 </button>
               </div>
@@ -229,7 +231,7 @@ export function InviteModal({
                   disabled={isGenerating}
                   className="text-body-sm text-accent-teal hover:underline font-medium flex items-center gap-1.5"
                 >
-                  {isGenerating ? "Generating..." : "+ New Code"}
+                  {isGenerating ? "Generating..." : `+ ${t("dorm.newCodeBtn")}`}
                 </button>
               </div>
             )}

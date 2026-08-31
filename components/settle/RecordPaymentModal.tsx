@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SPRING } from "@/lib/utils/constants";
 import { pesosToCentavos } from "@/lib/utils/currency";
 import type { DormMemberWithProfile } from "@/lib/hooks/useDorm";
+import { useTranslation } from "@/lib/context/LanguageContext";
 
 interface RecordPaymentModalProps {
   isOpen: boolean;
@@ -29,6 +30,7 @@ export function RecordPaymentModal({
   onClose,
   onSubmit,
 }: RecordPaymentModalProps) {
+  const { t } = useTranslation();
   const eligibleRecipients = members.filter((m) => m.id !== currentMemberId);
 
   const [toMemberId, setToMemberId] = useState(
@@ -103,10 +105,10 @@ export function RecordPaymentModal({
                 </span>
                 <div>
                   <h2 className="text-heading-3 font-semibold text-text-primary">
-                    Record a Settle-Up
+                    {t("settle.recordModalTitle")}
                   </h2>
                   <p className="text-body-sm text-text-tertiary">
-                    Log a GCash, Maya, Bank, or Cash transfer
+                    {t("settle.recordModalSub")}
                   </p>
                 </div>
               </div>
@@ -128,7 +130,7 @@ export function RecordPaymentModal({
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-body-sm font-medium text-text-secondary mb-1.5">
-                  Paid To (Recipient)
+                  {t("settle.recipientLabel")}
                 </label>
                 <select
                   value={toMemberId}
@@ -140,7 +142,7 @@ export function RecordPaymentModal({
                     <option key={m.id} value={m.id}>
                       {m.profile?.display_name ||
                         m.profile?.email ||
-                        "Roommate"}
+                        t("common.roommate")}
                     </option>
                   ))}
                 </select>
@@ -148,7 +150,7 @@ export function RecordPaymentModal({
 
               <div>
                 <label className="block text-body-sm font-medium text-text-secondary mb-1.5">
-                  Amount Sent (₱)
+                  {t("settle.amountLabel")}
                 </label>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-heading-3 font-mono text-text-tertiary">
@@ -171,20 +173,16 @@ export function RecordPaymentModal({
 
               <div>
                 <label className="block text-body-sm font-medium text-text-secondary mb-1.5">
-                  Note / Reference Number (Optional)
+                  {t("settle.noteLabel")}
                 </label>
                 <input
                   type="text"
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
-                  placeholder="e.g. GCash ref 90210291, Maya, BDO transfer"
+                  placeholder={t("settle.notePlaceholder")}
                   className="w-full px-4 py-3 rounded-xl bg-bg-surface border border-border-subtle text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-teal transition-all text-body-md"
                   disabled={isSubmitting}
                 />
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-accent-teal/5 border border-accent-teal/20 text-caption text-text-tertiary">
-                💡 The recipient will receive a notification to confirm receipt before the balance updates.
               </div>
 
               <div className="pt-2 flex gap-3">
@@ -194,7 +192,7 @@ export function RecordPaymentModal({
                   disabled={isSubmitting}
                   className="flex-1 btn-secondary"
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </button>
                 <button
                   type="submit"
@@ -204,10 +202,10 @@ export function RecordPaymentModal({
                   {isSubmitting ? (
                     <>
                       <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Sending...
+                      {t("settle.sendingPaymentBtn")}
                     </>
                   ) : (
-                    "Record Payment"
+                    t("settle.sendPaymentBtn")
                   )}
                 </button>
               </div>
