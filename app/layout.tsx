@@ -39,6 +39,8 @@ export const viewport: Viewport = {
   ],
 };
 
+import { AuthProvider } from "@/lib/context/AuthContext";
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
@@ -47,7 +49,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${outfit.variable} ${jetbrainsMono.variable}`}
     >
       <body className="min-h-dvh bg-bg-primary text-text-primary font-sans antialiased">
-        <ThemeProvider>{children}</ThemeProvider>
+        <AuthProvider>
+          <ThemeProvider>{children}</ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   );

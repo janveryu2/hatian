@@ -2,15 +2,13 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/hooks/useAuth";
+import { AuthProvider, useAuth } from "@/lib/context/AuthContext";
+import { DormProvider } from "@/lib/context/DormContext";
+import { BillsProvider } from "@/lib/context/BillsContext";
+import { SettlementProvider } from "@/lib/context/SettlementContext";
 import { BottomTabBar } from "@/components/bottom-tab-bar";
 
-/**
- * Layout for authenticated app pages.
- * Redirects to /login if not authenticated.
- * Renders the bottom tab bar.
- */
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
   const router = useRouter();
 
@@ -20,7 +18,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }, [user, isLoading, router]);
 
-  // Show nothing while checking auth — prevents flash
+  // Prevent flash while checking initial session
   if (isLoading) {
     return (
       <div className="min-h-dvh flex items-center justify-center bg-bg-primary">
@@ -46,5 +44,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       <BottomTabBar />
     </div>
+  );
+}
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <DormProvider>
+      <BillsProvider>
+        <SettlementProvider>
+          <AppLayoutContent>{children}</AppLayoutContent>
+        </SettlementProvider>
+      </BillsProvider>
+    </DormProvider>
   );
 }
