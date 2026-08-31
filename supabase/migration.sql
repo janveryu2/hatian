@@ -559,9 +559,18 @@ INSERT INTO public.bill_categories (id, dorm_id, name, icon, is_predefined, sort
   (uuid_generate_v4(), NULL, 'Other', '📦', TRUE, 4);
 
 -- ============================================
--- 6. ENABLE REALTIME PUBLICATIONS
+-- 6. ENABLE REALTIME PUBLICATIONS & REPLICA IDENTITY
 -- ============================================
+ALTER PUBLICATION supabase_realtime ADD TABLE public.dorms;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.dorm_members;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.bills;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.bill_shares;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.payments;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.dorm_members;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.dorm_invites;
+
+ALTER TABLE public.dorms REPLICA IDENTITY FULL;
+ALTER TABLE public.dorm_members REPLICA IDENTITY FULL;
+ALTER TABLE public.bills REPLICA IDENTITY FULL;
+ALTER TABLE public.bill_shares REPLICA IDENTITY FULL;
+ALTER TABLE public.payments REPLICA IDENTITY FULL;
+ALTER TABLE public.dorm_invites REPLICA IDENTITY FULL;
