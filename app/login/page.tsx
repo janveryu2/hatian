@@ -28,7 +28,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-dvh flex flex-col bg-bg-primary relative overflow-hidden">
       {/* Top right language toggle */}
-      <div className="absolute top-4 right-4 z-20">
+      <div className="absolute top-6 right-5 z-20 pt-[env(safe-area-inset-top,0px)]">
         <LanguageToggle variant="header" />
       </div>
 

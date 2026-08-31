@@ -13,6 +13,10 @@ import { getSupabaseClient } from "@/lib/supabase/client";
 import type { Profile } from "@/lib/supabase/types";
 import type { User, Session } from "@supabase/supabase-js";
 
+import { Capacitor } from "@capacitor/core";
+import { Browser } from "@capacitor/browser";
+import { App } from "@capacitor/app";
+
 interface AuthContextType {
   user: User | null;
   profile: Profile | null;
@@ -126,22 +130,69 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (isMounted) setIsLoading(false);
     });
 
+    // Native App URL Listener for OAuth deep link returns
+    let appUrlSub: Promise<{ remove: () => void }> | null = null;
+    if (typeof window !== "undefined" && Capacitor.isNativePlatform()) {
+      appUrlSub = App.addListener("appUrlOpen", async (event) => {
+        try {
+          await Browser.close();
+        } catch {
+          // Browser already closed
+        }
+
+        if (event.url.includes("code=")) {
+          try {
+            const urlObj = new URL(event.url);
+            const code = urlObj.searchParams.get("code");
+            if (code) {
+              await supabase.auth.exchangeCodeForSession(code);
+            }
+          } catch (e) {
+            console.error("Deep link parsing error:", e);
+          }
+        }
+      });
+    }
+
     return () => {
       isMounted = false;
       subscription.unsubscribe();
+      if (appUrlSub) {
+        appUrlSub.then((h) => h.remove());
+      }
     };
   }, [getClient, fetchProfile]);
 
   const signInWithGoogle = useCallback(async () => {
     const supabase = getClient();
     if (!supabase) return;
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-    if (error) throw error;
+
+    const redirectTo =
+      typeof window !== "undefined"
+        ? `${window.location.origin}/auth/callback`
+        : "https://hatian-sage.vercel.app/auth/callback";
+
+    if (typeof window !== "undefined" && Capacitor.isNativePlatform()) {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo,
+          skipBrowserRedirect: true,
+        },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        await Browser.open({ url: data.url, windowName: "_self" });
+      }
+    } else {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo,
+        },
+      });
+      if (error) throw error;
+    }
   }, [getClient]);
 
   const signOut = useCallback(async () => {

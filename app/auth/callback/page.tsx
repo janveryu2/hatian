@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseClient } from "@/lib/supabase/client";
+import { Capacitor } from "@capacitor/core";
+import { Browser } from "@capacitor/browser";
 
 /**
  * OAuth callback handler.
@@ -14,6 +16,10 @@ export default function AuthCallbackPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
+    // Attempt closing in-app browser if returning to WebView
+    if (typeof window !== "undefined" && Capacitor.isNativePlatform()) {
+      Browser.close().catch(() => {});
+    }
     const supabase = getSupabaseClient();
     if (!supabase) {
       router.replace("/login");
