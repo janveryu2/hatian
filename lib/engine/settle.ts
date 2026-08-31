@@ -57,17 +57,20 @@ export function calculateNetBalances(
 
   // 1. Process Bills
   for (const bill of bills) {
-    // The person who paid the bill gets credited the total bill amount
-    const currentPayerBal = balanceMap.get(bill.paidBy) || 0;
-    balanceMap.set(bill.paidBy, currentPayerBal + bill.amountCentavos);
+    if (!bill.paidBy) continue;
 
-    // Each participant owes their respective share
     for (const share of bill.shares) {
-      const currentMemberBal = balanceMap.get(share.memberId) || 0;
-      balanceMap.set(
-        share.memberId,
-        currentMemberBal - share.amountOwedCentavos
-      );
+      const isPayer = share.memberId === bill.paidBy;
+      const isSettled = share.paymentStatus === "confirmed";
+
+      // Only unconfirmed non-payer shares represent active unpaid balances
+      if (!isPayer && !isSettled) {
+        const debtorBal = balanceMap.get(share.memberId) || 0;
+        balanceMap.set(share.memberId, debtorBal - share.amountOwedCentavos);
+
+        const payerBal = balanceMap.get(bill.paidBy) || 0;
+        balanceMap.set(bill.paidBy, payerBal + share.amountOwedCentavos);
+      }
     }
   }
 

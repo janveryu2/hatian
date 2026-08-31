@@ -186,7 +186,7 @@ export default function SettlePage() {
                       : "var(--accent-sage)",
                   }}
                 >
-                  {isOwed ? "+" : ""}
+                  {isOwed ? "+" : owes ? "− " : ""}
                   {formatCentavos(Math.abs(myNetBalance))}
                 </p>
                 <p className="text-body-sm text-text-secondary mt-1">

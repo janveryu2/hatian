@@ -178,7 +178,9 @@ export function SettlementProvider({
 
   const engineBills: BillWithShares[] = useMemo(() => {
     return bills.map((b) => {
-      const payerMemberId = userToMemberId.get(b.paid_by) || "";
+      const payerMemberId =
+        userToMemberId.get(b.paid_by) ||
+        (members.some((m) => m.id === b.paid_by) ? b.paid_by : "");
       return {
         id: b.id,
         paidBy: payerMemberId,
@@ -191,7 +193,7 @@ export function SettlementProvider({
         })),
       };
     });
-  }, [bills, userToMemberId]);
+  }, [bills, userToMemberId, members]);
 
   const netBalances = useMemo(() => {
     const enginePayments = payments.map((p) => ({

@@ -136,6 +136,46 @@ describe("Hatian Balance & Settle-Up Engine (TDD)", () => {
       expect(balances.get("user_b")).toBe(-50000);
       expect(balances.get("user_a")).toBe(50000);
     });
+
+    it("clears debt when a bill share is marked confirmed", () => {
+      const bills: BillWithShares[] = [
+        {
+          id: "water_bill",
+          paidBy: "user_a",
+          amountCentavos: 98800,
+          shares: [
+            { memberId: "user_a", amountOwedCentavos: 41800, paymentStatus: "confirmed" },
+            { memberId: "user_b", amountOwedCentavos: 57000, paymentStatus: "confirmed" },
+          ],
+        },
+      ];
+
+      const balances = calculateNetBalances(members, bills, []);
+
+      // Both are settled up (0 balance)!
+      expect(balances.get("user_a")).toBe(0);
+      expect(balances.get("user_b")).toBe(0);
+    });
+
+    it("keeps debt active when a bill share is acknowledged (Pay Later)", () => {
+      const bills: BillWithShares[] = [
+        {
+          id: "water_bill",
+          paidBy: "user_a",
+          amountCentavos: 98800,
+          shares: [
+            { memberId: "user_a", amountOwedCentavos: 41800, paymentStatus: "confirmed" },
+            { memberId: "user_b", amountOwedCentavos: 57000, paymentStatus: "acknowledged" },
+          ],
+        },
+      ];
+
+      const balances = calculateNetBalances(members, bills, []);
+
+      // Acknowledged is 'Pay Later' -> balance is STILL active!
+      expect(balances.get("user_a")).toBe(57000);
+      expect(balances.get("user_b")).toBe(-57000);
+    });
   });
 
   describe("Debt Simplification Algorithm", () => {
