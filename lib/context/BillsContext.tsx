@@ -358,10 +358,15 @@ export function BillsProvider({ children }: { children: React.ReactNode }) {
         };
       });
 
+      const payerMember = (dormMembers || []).find(
+        (dm) => dm.user_id === billData.paidBy
+      );
+      const payerMemberId = payerMember ? payerMember.id : billData.paidBy;
+
       const { shares: initialShares } = recalculateSharesWithProvisionalStatus(
         billData.amountCentavos,
         rawSharesToCalc,
-        billData.paidBy,
+        payerMemberId,
         defaultCycleDays
       );
 
@@ -424,10 +429,15 @@ export function BillsProvider({ children }: { children: React.ReactNode }) {
         isDaysConfirmed: s.id === shareId ? true : s.is_days_confirmed ?? false,
       }));
 
+      const payerShare = targetBill.shares.find(
+        (s) => s.profile?.id === targetBill.paid_by
+      );
+      const payerMemberId = payerShare ? payerShare.member_id : targetBill.paid_by;
+
       const { shares: recalculated } = recalculateSharesWithProvisionalStatus(
         targetBill.amount_centavos,
         rawShares,
-        targetBill.paid_by,
+        payerMemberId,
         cycleDays
       );
 
