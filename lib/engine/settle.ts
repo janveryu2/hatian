@@ -154,3 +154,65 @@ export function simplifyDebts(
 
   return transactions;
 }
+
+export interface RedistributionOptions {
+  balances: Map<string, number>;
+  departingMemberId: string;
+  remainingMemberIds: string[];
+  adminMemberId?: string;
+  strategy: "redistribute_equally" | "absorb_by_admin" | "keep_on_record";
+}
+
+/**
+ * Handles debt/credit re-allocation when a roommate leaves the dorm.
+ * Guarantees zero centavo loss and deterministic remainder handling.
+ */
+export function redistributeMemberDebt(
+  options: RedistributionOptions
+): Map<string, number> {
+  const {
+    balances,
+    departingMemberId,
+    remainingMemberIds,
+    adminMemberId,
+    strategy,
+  } = options;
+
+  const newBalances = new Map<string, number>(balances);
+  const departingBal = newBalances.get(departingMemberId) || 0;
+
+  if (Math.abs(departingBal) < 1 || strategy === "keep_on_record") {
+    return newBalances;
+  }
+
+  if (remainingMemberIds.length === 0) {
+    return newBalances;
+  }
+
+  const adminId = adminMemberId || remainingMemberIds[0];
+
+  if (strategy === "absorb_by_admin") {
+    const currentAdminBal = newBalances.get(adminId) || 0;
+    newBalances.set(adminId, currentAdminBal + departingBal);
+    newBalances.set(departingMemberId, 0);
+    return newBalances;
+  }
+
+  if (strategy === "redistribute_equally") {
+    const N = remainingMemberIds.length;
+    const baseShare = Math.trunc(departingBal / N);
+    const remainder = departingBal - baseShare * N;
+
+    for (const memberId of remainingMemberIds) {
+      const cur = newBalances.get(memberId) || 0;
+      const isLead = memberId === adminId;
+      newBalances.set(memberId, cur + baseShare + (isLead ? remainder : 0));
+    }
+
+    newBalances.set(departingMemberId, 0);
+    return newBalances;
+  }
+
+  return newBalances;
+}
+

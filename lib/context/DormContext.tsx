@@ -55,7 +55,10 @@ export interface DormContextType {
     status: "active" | "inactive",
     moveOutDate?: string
   ) => Promise<void>;
-  removeMember: (memberId: string) => Promise<void>;
+  removeMember: (
+    memberId: string,
+    strategy?: "redistribute_equally" | "absorb_by_admin" | "keep_on_record"
+  ) => Promise<void>;
   leaveDorm: (dormId?: string) => Promise<void>;
   switchActiveDorm: (dormId: string) => void;
   refreshDorm: (preferredDormId?: string) => Promise<void>;
@@ -543,7 +546,11 @@ export function DormProvider({ children }: { children: React.ReactNode }) {
   );
 
   const removeMember = useCallback(
-    async (memberId: string) => {
+    async (
+      memberId: string,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      _strategy?: "redistribute_equally" | "absorb_by_admin" | "keep_on_record"
+    ) => {
       const supabase = getClient();
       if (!supabase) return;
 

@@ -9,6 +9,7 @@ import { useDorm } from "@/lib/hooks/useDorm";
 import { useBills, type BillWithDetails } from "@/lib/hooks/useBills";
 import { CreateBillModal } from "@/components/bills/CreateBillModal";
 import { BillDetailModal } from "@/components/bills/BillDetailModal";
+import { LoadingSkeletonCard } from "@/components/ui/LoadingSkeleton";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -63,8 +64,20 @@ export default function BillsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-[70vh] flex items-center justify-center">
-        <div className="w-8 h-8 border-3 border-accent-teal border-t-transparent rounded-full animate-spin" />
+      <div
+        className="px-5 pt-4 max-w-xl mx-auto space-y-4"
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 16px)" }}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <div className="space-y-1.5">
+            <div className="w-24 h-7 rounded-lg bg-bg-surface/80 animate-pulse" />
+            <div className="w-36 h-4 rounded-md bg-bg-surface/50 animate-pulse" />
+          </div>
+          <div className="w-24 h-9 rounded-xl bg-bg-surface/80 animate-pulse" />
+        </div>
+        <LoadingSkeletonCard />
+        <LoadingSkeletonCard />
+        <LoadingSkeletonCard />
       </div>
     );
   }

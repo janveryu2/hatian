@@ -10,6 +10,8 @@ import { getGreeting, formatToday } from "@/lib/utils/dates";
 import { formatCentavos } from "@/lib/utils/currency";
 import { SPRING, STAGGER_DELAY } from "@/lib/utils/constants";
 
+import { LoadingSkeletonHero, LoadingSkeletonCard } from "@/components/ui/LoadingSkeleton";
+
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -35,6 +37,26 @@ export default function HomePage() {
   const { activeDorm, members, isLoading: isDormLoading } = useDorm();
   const { bills } = useBills();
   const { myNetBalance, payments } = useSettlement();
+
+  if (isDormLoading) {
+    return (
+      <div
+        className="px-5 pt-4 max-w-xl mx-auto space-y-5"
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 16px)" }}
+      >
+        <div className="space-y-1.5 mb-2">
+          <div className="w-24 h-4 rounded-md bg-bg-surface/50 animate-pulse" />
+          <div className="w-48 h-8 rounded-lg bg-bg-surface/80 animate-pulse" />
+        </div>
+        <LoadingSkeletonHero />
+        <div className="grid grid-cols-2 gap-3.5">
+          <LoadingSkeletonCard />
+          <LoadingSkeletonCard />
+        </div>
+        <LoadingSkeletonCard />
+      </div>
+    );
+  }
 
   const firstName = profile?.display_name?.split(" ")[0] ?? "there";
   const activeMembers = members.filter((m) => m.status === "active");

@@ -3,12 +3,15 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SPRING } from "@/lib/utils/constants";
+import { formatCentavos } from "@/lib/utils/currency";
 import type { DormMemberWithProfile } from "@/lib/hooks/useDorm";
 
 interface MemberActionModalProps {
   isOpen: boolean;
   member: DormMemberWithProfile | null;
   currentUserId: string;
+  totalAdmins: number;
+  memberBalanceCentavos?: number;
   onClose: () => void;
   onUpdateRole: (memberId: string, role: "admin" | "member") => Promise<void>;
   onUpdateStatus: (
@@ -16,13 +19,18 @@ interface MemberActionModalProps {
     status: "active" | "inactive",
     moveOutDate?: string
   ) => Promise<void>;
-  onRemove: (memberId: string) => Promise<void>;
+  onRemove: (
+    memberId: string,
+    strategy?: "redistribute_equally" | "absorb_by_admin" | "keep_on_record"
+  ) => Promise<void>;
 }
 
 export function MemberActionModal({
   isOpen,
   member,
   currentUserId,
+  totalAdmins,
+  memberBalanceCentavos = 0,
   onClose,
   onUpdateRole,
   onUpdateStatus,
@@ -32,16 +40,27 @@ export function MemberActionModal({
     new Date().toISOString().split("T")[0]
   );
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+  const [redistributionStrategy, setRedistributionStrategy] = useState<
+    "redistribute_equally" | "absorb_by_admin" | "keep_on_record"
+  >("redistribute_equally");
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!member) return null;
 
   const isSelf = member.user_id === currentUserId;
+  const isSoleAdmin = member.role === "admin" && totalAdmins <= 1;
   const displayName =
     member.profile?.display_name || member.profile?.email || "Roommate";
 
   const handleRoleToggle = async () => {
+    if (isSoleAdmin) {
+      setError(
+        "A dorm must always have at least one Admin. Please promote another roommate before demoting yourself."
+      );
+      return;
+    }
+
     try {
       setIsProcessing(true);
       setError(null);
@@ -76,10 +95,17 @@ export function MemberActionModal({
   };
 
   const handleRemove = async () => {
+    if (isSoleAdmin) {
+      setError(
+        "Cannot remove the only Admin in this dorm. Please promote another member first."
+      );
+      return;
+    }
+
     try {
       setIsProcessing(true);
       setError(null);
-      await onRemove(member.id);
+      await onRemove(member.id, redistributionStrategy);
       setShowRemoveConfirm(false);
       onClose();
     } catch (err: unknown) {
@@ -165,15 +191,26 @@ export function MemberActionModal({
                   Role
                 </span>
                 <span className="text-body-md font-semibold text-text-primary capitalize">
-                  {member.role}
+                  {member.role} {isSoleAdmin ? "(Sole Admin)" : ""}
                 </span>
               </div>
               <div className="p-3 rounded-xl bg-bg-surface border border-border-subtle">
                 <span className="text-caption text-text-tertiary uppercase block mb-0.5">
-                  Move-In Date
+                  Net Balance
                 </span>
-                <span className="text-body-md font-semibold text-text-primary font-mono">
-                  {member.move_in_date}
+                <span
+                  className="text-body-md font-semibold font-mono tabular-nums"
+                  style={{
+                    color:
+                      memberBalanceCentavos > 0
+                        ? "var(--accent-teal)"
+                        : memberBalanceCentavos < 0
+                        ? "var(--accent-coral)"
+                        : "var(--text-tertiary)",
+                  }}
+                >
+                  {memberBalanceCentavos > 0 ? "+" : ""}
+                  {formatCentavos(memberBalanceCentavos)}
                 </span>
               </div>
             </div>
@@ -184,7 +221,7 @@ export function MemberActionModal({
                 <button
                   type="button"
                   onClick={handleRoleToggle}
-                  disabled={isProcessing || isSelf}
+                  disabled={isProcessing || isSoleAdmin}
                   className="w-full p-4 rounded-2xl bg-bg-surface border border-border-subtle hover:border-accent-teal/50 transition-colors flex items-center justify-between text-left disabled:opacity-50"
                 >
                   <div>
@@ -194,7 +231,9 @@ export function MemberActionModal({
                         : "Promote to Admin"}
                     </p>
                     <p className="text-caption text-text-tertiary">
-                      {member.role === "admin"
+                      {isSoleAdmin
+                        ? "Cannot demote sole admin (dorm must have ≥1 admin)"
+                        : member.role === "admin"
                         ? "Revoke administrative privileges for this dorm"
                         : "Allow managing bills, categories, and roommates"}
                     </p>
@@ -255,23 +294,104 @@ export function MemberActionModal({
                   <button
                     type="button"
                     onClick={() => setShowRemoveConfirm(true)}
-                    className="w-full p-3 text-accent-terracotta text-body-sm font-medium hover:bg-accent-terracotta/10 rounded-xl transition-colors text-center"
+                    disabled={isSoleAdmin}
+                    className="w-full p-3 text-accent-terracotta text-body-sm font-medium hover:bg-accent-terracotta/10 rounded-xl transition-colors text-center disabled:opacity-40"
                   >
                     Remove from Dorm...
                   </button>
                 )}
               </div>
             ) : (
-              /* Remove Member Confirmation View */
-              <div className="p-5 rounded-2xl bg-accent-terracotta/10 border border-accent-terracotta/30 text-center space-y-3">
-                <span className="text-3xl">⚠️</span>
-                <p className="text-body-md font-semibold text-text-primary">
-                  Remove {displayName}?
-                </p>
-                <p className="text-caption text-text-tertiary max-w-[280px] mx-auto">
-                  They will lose access to this dorm and its bills immediately. Past settle-up records will remain preserved.
-                </p>
-                <div className="flex gap-2.5 pt-2">
+              /* Remove Member Confirmation & Debt Redistribution View */
+              <div className="p-5 rounded-2xl bg-accent-terracotta/10 border border-accent-terracotta/30 space-y-4">
+                <div className="text-center space-y-1">
+                  <span className="text-3xl block">⚠️</span>
+                  <p className="text-body-md font-semibold text-text-primary">
+                    Remove {displayName}?
+                  </p>
+                  <p className="text-caption text-text-tertiary max-w-[280px] mx-auto">
+                    They will lose access to this dorm immediately.
+                  </p>
+                </div>
+
+                {/* Active balance redistribution options */}
+                {memberBalanceCentavos !== 0 && (
+                  <div className="p-3.5 rounded-xl bg-bg-card border border-border-subtle text-left space-y-2.5">
+                    <p className="text-caption font-semibold text-text-primary">
+                      Unsettled Balance:{" "}
+                      <span className="font-mono font-bold text-accent-terracotta">
+                        {formatCentavos(memberBalanceCentavos)}
+                      </span>
+                    </p>
+                    <p className="text-caption text-text-tertiary">
+                      Choose how to handle their remaining balance in the dorm ledger:
+                    </p>
+
+                    <div className="space-y-2 pt-1 text-body-sm">
+                      <label className="flex items-start gap-2.5 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="redistribute"
+                          checked={redistributionStrategy === "redistribute_equally"}
+                          onChange={() =>
+                            setRedistributionStrategy("redistribute_equally")
+                          }
+                          className="mt-1"
+                        />
+                        <div>
+                          <span className="font-medium text-text-primary block">
+                            Redistribute equally among roommates
+                          </span>
+                          <span className="text-caption text-text-tertiary">
+                            Remaining roommates evenly absorb the share
+                          </span>
+                        </div>
+                      </label>
+
+                      <label className="flex items-start gap-2.5 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="redistribute"
+                          checked={redistributionStrategy === "absorb_by_admin"}
+                          onChange={() =>
+                            setRedistributionStrategy("absorb_by_admin")
+                          }
+                          className="mt-1"
+                        />
+                        <div>
+                          <span className="font-medium text-text-primary block">
+                            Absorb debt as Admin
+                          </span>
+                          <span className="text-caption text-text-tertiary">
+                            You assume the balance directly
+                          </span>
+                        </div>
+                      </label>
+
+                      <label className="flex items-start gap-2.5 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="redistribute"
+                          checked={redistributionStrategy === "keep_on_record"}
+                          onChange={() =>
+                            setRedistributionStrategy("keep_on_record")
+                          }
+                          className="mt-1"
+                        />
+                        <div>
+                          <span className="font-medium text-text-primary block">
+                            Keep on record as historical debt
+                          </span>
+                          <span className="text-caption text-text-tertiary">
+                            Unchanged historical record
+                          </span>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-2.5 pt-1">
                   <button
                     type="button"
                     onClick={() => setShowRemoveConfirm(false)}
@@ -286,7 +406,7 @@ export function MemberActionModal({
                     disabled={isProcessing}
                     className="flex-1 px-4 py-2.5 rounded-xl bg-accent-terracotta text-white font-medium text-body-sm hover:opacity-90 transition-opacity"
                   >
-                    {isProcessing ? "Removing..." : "Yes, Remove"}
+                    {isProcessing ? "Removing..." : "Confirm Removal"}
                   </button>
                 </div>
               </div>

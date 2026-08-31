@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   calculateNetBalances,
   simplifyDebts,
+  redistributeMemberDebt,
   type BalanceMember,
   type BillWithShares,
   type SettlementPayment,
@@ -167,6 +168,89 @@ describe("Hatian Balance & Settle-Up Engine (TDD)", () => {
 
       const plan = simplifyDebts(balances);
       expect(plan).toEqual([]);
+    });
+  });
+
+  describe("Member Removal Debt Redistribution", () => {
+    it("redistributes departing member debt equally among remaining members", () => {
+      // Dave is leaving and owes ₱600 (60,000 centavos)
+      // Remaining: Alice (+₱500), Bob (-₱200), Charlie (+₱300)
+      const balances = new Map<string, number>([
+        ["user_a", 50000],
+        ["user_b", -20000],
+        ["user_c", 30000],
+        ["user_d", -60000],
+      ]);
+
+      const updated = redistributeMemberDebt({
+        balances,
+        departingMemberId: "user_d",
+        remainingMemberIds: ["user_a", "user_b", "user_c"],
+        adminMemberId: "user_a",
+        strategy: "redistribute_equally",
+      });
+
+      // Dave is now 0 (debt wiped from dorm ledger)
+      expect(updated.get("user_d")).toBe(0);
+      // Each remaining member absorbs 60,000 / 3 = 20,000 centavos of debt
+      expect(updated.get("user_a")).toBe(30000); // 50,000 - 20,000
+      expect(updated.get("user_b")).toBe(-40000); // -20,000 - 20,000
+      expect(updated.get("user_c")).toBe(10000); // 30,000 - 20,000
+
+      // Net sum of all balances must still equal 0
+      const netSum = Array.from(updated.values()).reduce((a, b) => a + b, 0);
+      expect(netSum).toBe(0);
+    });
+
+    it("absorbs departing member debt completely by admin", () => {
+      const balances = new Map<string, number>([
+        ["user_a", 50000], // Admin
+        ["user_b", -20000],
+        ["user_d", -30000], // Leaving
+      ]);
+
+      const updated = redistributeMemberDebt({
+        balances,
+        departingMemberId: "user_d",
+        remainingMemberIds: ["user_a", "user_b"],
+        adminMemberId: "user_a",
+        strategy: "absorb_by_admin",
+      });
+
+      expect(updated.get("user_d")).toBe(0);
+      expect(updated.get("user_a")).toBe(20000); // 50,000 - 30,000
+      expect(updated.get("user_b")).toBe(-20000); // untouched
+
+      const netSum = Array.from(updated.values()).reduce((a, b) => a + b, 0);
+      expect(netSum).toBe(0);
+    });
+
+    it("admin absorbs remainder centavos when debt does not divide evenly", () => {
+      // Dave owes 10,000 centavos / 3 remaining members = 3,333.33
+      // Base share = 3,333, Remainder = 1 centavo
+      // Admin (user_a) absorbs 3,334 centavos
+      const balances = new Map<string, number>([
+        ["user_a", 10000], // Admin
+        ["user_b", 0],
+        ["user_c", 0],
+        ["user_d", -10000], // Leaving
+      ]);
+
+      const updated = redistributeMemberDebt({
+        balances,
+        departingMemberId: "user_d",
+        remainingMemberIds: ["user_a", "user_b", "user_c"],
+        adminMemberId: "user_a",
+        strategy: "redistribute_equally",
+      });
+
+      expect(updated.get("user_d")).toBe(0);
+      expect(updated.get("user_a")).toBe(10000 - 3334); // 6666
+      expect(updated.get("user_b")).toBe(-3333);
+      expect(updated.get("user_c")).toBe(-3333);
+
+      const netSum = Array.from(updated.values()).reduce((a, b) => a + b, 0);
+      expect(netSum).toBe(0);
     });
   });
 });

@@ -5,10 +5,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SPRING, STAGGER_DELAY } from "@/lib/utils/constants";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useDorm, type DormMemberWithProfile } from "@/lib/hooks/useDorm";
+import { useSettlement } from "@/lib/hooks/useSettlement";
 import { CreateDormModal } from "@/components/dorm/CreateDormModal";
 import { JoinDormModal } from "@/components/dorm/JoinDormModal";
 import { InviteModal } from "@/components/dorm/InviteModal";
 import { MemberActionModal } from "@/components/dorm/MemberActionModal";
+import { LoadingSkeletonHero, LoadingSkeletonCard } from "@/components/ui/LoadingSkeleton";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -25,6 +27,7 @@ const itemVariants = {
 
 export default function DormPage() {
   const { user } = useAuth();
+  const { netBalances } = useSettlement();
   const {
     dorms,
     activeDorm,
@@ -55,8 +58,17 @@ export default function DormPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-[70vh] flex items-center justify-center">
-        <div className="w-8 h-8 border-3 border-accent-teal border-t-transparent rounded-full animate-spin" />
+      <div
+        className="px-5 pt-4 max-w-lg mx-auto space-y-4"
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 16px)" }}
+      >
+        <div className="space-y-1.5 mb-4">
+          <div className="w-28 h-7 rounded-lg bg-bg-surface/80 animate-pulse" />
+          <div className="w-44 h-4 rounded-md bg-bg-surface/50 animate-pulse" />
+        </div>
+        <LoadingSkeletonHero />
+        <LoadingSkeletonCard />
+        <LoadingSkeletonCard />
       </div>
     );
   }
@@ -414,6 +426,8 @@ export default function DormPage() {
         isOpen={!!selectedMember}
         member={selectedMember}
         currentUserId={user?.id || ""}
+        totalAdmins={members.filter((m) => m.role === "admin" && m.status === "active").length}
+        memberBalanceCentavos={selectedMember ? netBalances.get(selectedMember.id) || 0 : 0}
         onClose={() => setSelectedMember(null)}
         onUpdateRole={updateMemberRole}
         onUpdateStatus={setMemberStatus}
