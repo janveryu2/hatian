@@ -19,10 +19,11 @@ export interface CalculatedShare {
 }
 
 export interface SplitOptions {
-  method: "equal" | "percentage" | "custom_amount" | "prorated_by_days";
+  method: "prorated_by_days" | "equal" | "percentage" | "custom_amount";
   totalAmountCentavos: number;
   members: SplitParticipant[];
   creatorId: string;
+  daysPresent?: Record<string, number>;
   percentages?: Record<string, number>;
   customAmounts?: Record<string, number>;
   billingPeriodStart?: string;
@@ -142,24 +143,26 @@ export function calculateCustomSplit(
 /**
  * Calculates number of days between two YYYY-MM-DD date strings inclusive.
  */
-function daysBetween(startStr: string, endStr: string): number {
+export function daysBetween(startStr: string, endStr: string): number {
   const start = new Date(startStr);
   const end = new Date(endStr);
   const diffTime = end.getTime() - start.getTime();
-  return Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1);
+  return Math.max(1, Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1);
 }
 
 /**
- * 4. Prorated by Days Present
- * Divides bill proportional to the number of active days each member was present
- * within the [periodStart, periodEnd] cycle.
+ * 4. Prorated by Days Present (Hatian Core Calculation)
+ * Divides bill proportional to the number of active days each member was present:
+ * (personDays / totalPersonDays) * totalAmountCentavos
+ * Remainder centavos strictly absorbed by bill creator/payer.
  */
 export function calculateProratedSplit(
   totalAmountCentavos: number,
   members: SplitParticipant[],
   periodStart: string,
   periodEnd: string,
-  creatorId: string
+  creatorId: string,
+  daysPresent?: Record<string, number>
 ): CalculatedShare[] {
   if (members.length === 0) return [];
   if (totalAmountCentavos <= 0) {
@@ -168,9 +171,14 @@ export function calculateProratedSplit(
 
   const pStart = new Date(periodStart).getTime();
   const pEnd = new Date(periodEnd).getTime();
+  const defaultCycleDays = daysBetween(periodStart, periodEnd);
 
   // Compute days present for each member
   const memberDays = members.map((m) => {
+    if (daysPresent && typeof daysPresent[m.id] === "number") {
+      return { member: m, days: Math.max(0, daysPresent[m.id]) };
+    }
+
     const moveIn = m.moveInDate ? new Date(m.moveInDate).getTime() : pStart;
     const moveOut = m.moveOutDate ? new Date(m.moveOutDate).getTime() : pEnd;
 
@@ -191,7 +199,7 @@ export function calculateProratedSplit(
   const totalPersonDays = memberDays.reduce((sum, md) => sum + md.days, 0);
 
   if (totalPersonDays === 0) {
-    // Fallback to equal split if dates result in 0 days
+    // Fallback to equal split if total person-days is 0
     return calculateEqualSplit(totalAmountCentavos, members, creatorId);
   }
 
@@ -226,6 +234,7 @@ export function calculateSplit(options: SplitOptions): SplitResult {
     totalAmountCentavos,
     members,
     creatorId,
+    daysPresent = {},
     percentages = {},
     customAmounts = {},
     billingPeriodStart = new Date().toISOString().split("T")[0],
@@ -235,6 +244,16 @@ export function calculateSplit(options: SplitOptions): SplitResult {
   let shares: CalculatedShare[] = [];
 
   switch (method) {
+    case "prorated_by_days":
+      shares = calculateProratedSplit(
+        totalAmountCentavos,
+        members,
+        billingPeriodStart,
+        billingPeriodEnd,
+        creatorId,
+        daysPresent
+      );
+      break;
     case "equal":
       shares = calculateEqualSplit(totalAmountCentavos, members, creatorId);
       break;
@@ -253,22 +272,22 @@ export function calculateSplit(options: SplitOptions): SplitResult {
         customAmounts
       );
       break;
-    case "prorated_by_days":
+    default:
       shares = calculateProratedSplit(
         totalAmountCentavos,
         members,
         billingPeriodStart,
         billingPeriodEnd,
-        creatorId
+        creatorId,
+        daysPresent
       );
-      break;
   }
 
-  const total = shares.reduce((sum, s) => sum + s.amountCentavos, 0);
+  const allocatedTotal = shares.reduce((sum, s) => sum + s.amountCentavos, 0);
 
   return {
     shares,
-    totalCentavos: total,
-    remainderCentavos: totalAmountCentavos - total,
+    totalCentavos: totalAmountCentavos,
+    remainderCentavos: totalAmountCentavos - allocatedTotal,
   };
 }

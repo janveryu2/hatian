@@ -33,7 +33,7 @@ const itemVariants = {
 };
 
 export default function HomePage() {
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const { activeDorm, members, isLoading: isDormLoading } = useDorm();
   const { bills } = useBills();
   const { myNetBalance, payments } = useSettlement();
@@ -231,36 +231,57 @@ export default function HomePage() {
           </div>
         ) : (
           <div className="space-y-2.5">
-            {upcomingBills.map((b) => (
-              <Link
-                key={b.id}
-                href="/bills"
-                className="card p-3.5 flex items-center justify-between gap-3 hover:border-accent-teal/40 transition-colors"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className="text-2xl p-1.5 rounded-xl bg-accent-teal/10">
-                    {b.category?.icon || "📋"}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-body-sm font-semibold text-text-primary truncate">
-                      {b.category?.name || "Bill"}
-                    </p>
-                    <p className="text-caption text-text-tertiary">
-                      Due {b.due_date}
-                    </p>
-                  </div>
-                </div>
+            {upcomingBills.map((b) => {
+              const isPayer = b.paid_by === user?.id;
+              const myShare = b.userShare;
 
-                <div className="text-right shrink-0">
-                  <p className="font-mono font-bold text-text-primary text-body-sm">
-                    {formatCentavos(b.amount_centavos)}
-                  </p>
-                  <span className="text-caption text-accent-teal font-medium">
-                    {b.shares.length} shares
-                  </span>
-                </div>
-              </Link>
-            ))}
+              return (
+                <Link
+                  key={b.id}
+                  href="/bills"
+                  className="card p-3.5 flex items-center justify-between gap-3 hover:border-accent-teal/40 transition-colors"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="text-2xl p-1.5 rounded-xl bg-accent-teal/10">
+                      {b.category?.icon || "📋"}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-body-sm font-semibold text-text-primary truncate">
+                        {b.category?.name || "Bill"}
+                      </p>
+                      <p className="text-caption text-text-tertiary">
+                        Due {b.due_date} • Total {formatCentavos(b.amount_centavos)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="text-right shrink-0">
+                    {isPayer ? (
+                      <span className="text-caption font-semibold text-accent-teal px-2 py-0.5 rounded-full bg-accent-teal/10">
+                        You fronted
+                      </span>
+                    ) : myShare ? (
+                      <div>
+                        <p className="font-mono font-bold text-accent-coral text-body-sm">
+                          {formatCentavos(myShare.amount_owed_centavos)}
+                        </p>
+                        <span className="text-caption text-text-tertiary">
+                          {myShare.payment_status === "confirmed"
+                            ? "✓ Settled"
+                            : myShare.payment_status === "paid"
+                            ? "Pending"
+                            : "You owe"}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-caption text-text-tertiary font-mono">
+                        {formatCentavos(b.amount_centavos)}
+                      </span>
+                    )}
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         )}
       </motion.div>

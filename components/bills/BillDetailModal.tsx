@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { SPRING, SPLIT_METHOD_LABELS } from "@/lib/utils/constants";
+import { SPRING } from "@/lib/utils/constants";
 import { formatCentavos } from "@/lib/utils/currency";
 import type { BillWithDetails } from "@/lib/hooks/useBills";
 
@@ -39,6 +39,12 @@ export function BillDetailModal({
   const isPayer = bill.paid_by === currentUserId;
   const isCreator = bill.created_by === currentUserId;
   const canDelete = isAdmin || isCreator;
+
+  // Current user's personal share
+  const myShare = bill.userShare;
+  const isMyShareConfirmed = myShare?.payment_status === "confirmed";
+  const isMySharePaid = myShare?.payment_status === "paid";
+  const isMyShareUnpaid = myShare && !isMySharePaid && !isMyShareConfirmed;
 
   const handleMarkPaid = async (shareId: string) => {
     try {
@@ -97,7 +103,7 @@ export function BillDetailModal({
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: "100%", opacity: 0 }}
             transition={SPRING.modal}
-            className="relative w-full max-w-lg bg-bg-card border border-border-subtle rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl z-10 max-h-[90vh] overflow-y-auto"
+            className="relative w-full max-w-lg bg-bg-card border border-border-subtle rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl z-10 max-h-[92vh] overflow-y-auto flex flex-col"
             style={{
               paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)",
             }}
@@ -105,13 +111,13 @@ export function BillDetailModal({
             <div className="w-12 h-1.5 bg-border-subtle rounded-full mx-auto mb-4 sm:hidden" />
 
             {/* Header */}
-            <div className="flex items-start justify-between mb-5">
+            <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
                 <span className="text-3xl p-2.5 rounded-2xl bg-accent-teal/10 text-accent-teal">
                   {bill.category?.icon || "📋"}
                 </span>
                 <div>
-                  <h2 className="text-heading-3 font-semibold text-text-primary">
+                  <h2 className="text-heading-2 font-bold text-text-primary">
                     {bill.category?.name || "Bill"}
                   </h2>
                   <p className="text-body-sm text-text-tertiary">
@@ -134,62 +140,106 @@ export function BillDetailModal({
               </div>
             )}
 
-            {/* Total Amount Card */}
-            <div className="p-5 rounded-2xl bg-bg-surface border border-border-subtle mb-5 flex items-center justify-between">
-              <div>
-                <p className="text-caption text-text-tertiary uppercase tracking-wider mb-0.5">
-                  Total Bill Amount
-                </p>
-                <p className="text-currency-lg font-mono font-bold text-text-primary">
-                  {formatCentavos(bill.amount_centavos)}
-                </p>
-              </div>
-              <div className="text-right">
-                <span className="text-caption text-text-tertiary block mb-0.5">
-                  Split Method
-                </span>
-                <span className="px-2.5 py-1 rounded-lg bg-accent-teal/15 text-accent-teal text-caption font-semibold">
-                  {SPLIT_METHOD_LABELS[bill.split_method] || bill.split_method}
-                </span>
-              </div>
-            </div>
+            {/* 1. Primary Action Hero Banner for Current User */}
+            {!isPayer && myShare && (
+              <div
+                className={`p-4 rounded-2xl mb-4 border transition-all ${
+                  isMyShareConfirmed
+                    ? "bg-accent-teal/10 border-accent-teal/30"
+                    : isMySharePaid
+                    ? "bg-accent-sand/10 border-accent-sand/30"
+                    : "bg-accent-coral/10 border-accent-coral/30"
+                }`}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <span className="text-caption font-semibold uppercase tracking-wider block text-text-secondary">
+                      Your Share Owed
+                    </span>
+                    <p className="text-heading-2 font-mono font-bold text-text-primary">
+                      {formatCentavos(myShare.amount_owed_centavos)}
+                    </p>
+                  </div>
 
-            {/* Payer Info */}
-            <div className="p-3.5 rounded-xl bg-bg-surface border border-border-subtle mb-5 flex items-center justify-between text-body-sm">
-              <span className="text-text-tertiary">Fronted / Paid By:</span>
-              <span className="font-semibold text-text-primary flex items-center gap-1.5">
-                <span>💳</span>
-                {bill.payerProfile?.display_name ||
-                  bill.payerProfile?.email ||
-                  "Roommate"}
-                {isPayer && (
-                  <span className="text-caption text-accent-teal">(You)</span>
-                )}
-              </span>
+                  <div className="shrink-0">
+                    {isMyShareConfirmed ? (
+                      <span className="px-3.5 py-1.5 rounded-xl bg-accent-teal text-white text-body-sm font-semibold flex items-center gap-1.5 shadow-sm">
+                        <span>✓</span> Settled
+                      </span>
+                    ) : isMySharePaid ? (
+                      <span className="px-3.5 py-1.5 rounded-xl bg-accent-sand/20 text-accent-sand text-body-sm font-semibold">
+                        Sent • Pending Confirm
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleMarkPaid(myShare.id)}
+                        disabled={processingShareId === myShare.id}
+                        className="btn-primary py-2.5 px-4 text-body-sm font-bold shadow-md shadow-accent-teal/20 flex items-center gap-1.5"
+                      >
+                        {processingShareId === myShare.id ? (
+                          "Updating..."
+                        ) : (
+                          <>
+                            <span>Mark Paid</span>
+                            <span>→</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Total Amount & Paid By Info */}
+            <div className="grid grid-cols-2 gap-3 mb-5">
+              <div className="p-3.5 rounded-xl bg-bg-surface border border-border-subtle">
+                <span className="text-caption text-text-tertiary uppercase block mb-0.5">
+                  Total Bill
+                </span>
+                <span className="text-heading-3 font-mono font-bold text-text-primary">
+                  {formatCentavos(bill.amount_centavos)}
+                </span>
+              </div>
+              <div className="p-3.5 rounded-xl bg-bg-surface border border-border-subtle">
+                <span className="text-caption text-text-tertiary uppercase block mb-0.5">
+                  Fronted By
+                </span>
+                <span className="text-body-md font-semibold text-text-primary truncate block">
+                  {bill.payerProfile?.display_name ||
+                    bill.payerProfile?.email ||
+                    "Roommate"}
+                  {isPayer && " (You)"}
+                </span>
+              </div>
             </div>
 
             {/* Roommate Shares Breakdown */}
-            <div className="space-y-3 mb-6">
-              <h3 className="text-body-md font-semibold text-text-primary">
-                Shares & Payment Status
-              </h3>
+            <div className="space-y-3 mb-6 flex-1">
+              <div className="flex items-center justify-between">
+                <h3 className="text-caption font-semibold uppercase text-text-secondary">
+                  Roommate Breakdown ({bill.shares.length})
+                </h3>
+                <span className="text-caption text-text-tertiary">
+                  Auto-prorated by days
+                </span>
+              </div>
 
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 {bill.shares.map((share) => {
-                  const isShareOwner =
-                    share.profile?.id === currentUserId;
-                  const isShareConfirmed =
-                    share.payment_status === "confirmed";
-                  const isSharePaid = share.payment_status === "paid";
+                  const isShareOwner = share.profile?.id === currentUserId;
+                  const isConfirmed = share.payment_status === "confirmed";
+                  const isPaid = share.payment_status === "paid";
                   const isBusy = processingShareId === share.id;
 
                   return (
                     <div
                       key={share.id}
-                      className="p-3.5 rounded-2xl bg-bg-surface border border-border-subtle flex items-center justify-between gap-3"
+                      className="p-3 rounded-xl bg-bg-surface border border-border-subtle flex items-center justify-between gap-3"
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-9 h-9 rounded-xl bg-accent-teal/10 flex items-center justify-center text-body-sm font-semibold text-accent-teal uppercase overflow-hidden shrink-0">
+                        <div className="w-8 h-8 rounded-lg bg-accent-teal/10 flex items-center justify-center text-caption font-bold text-accent-teal uppercase overflow-hidden shrink-0">
                           {share.profile?.avatar_url ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
@@ -202,8 +252,8 @@ export function BillDetailModal({
                           )}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-body-sm font-semibold text-text-primary truncate">
-                            {share.userName} {isShareOwner ? "(You)" : ""}
+                          <p className="text-body-sm font-semibold text-text-primary truncate flex items-center gap-1">
+                            {share.userName} {isShareOwner && "(You)"}
                           </p>
                           <p className="text-caption font-mono font-bold text-text-secondary">
                             {formatCentavos(share.amount_owed_centavos)}
@@ -211,25 +261,25 @@ export function BillDetailModal({
                         </div>
                       </div>
 
-                      {/* Action / Badge based on 2-step confirmation state */}
-                      <div className="shrink-0 flex items-center gap-2">
-                        {isShareConfirmed ? (
-                          <span className="px-2.5 py-1 rounded-full bg-accent-sage/20 text-accent-sage text-caption font-semibold">
+                      {/* Action / Badge */}
+                      <div className="shrink-0">
+                        {isConfirmed ? (
+                          <span className="px-2.5 py-1 rounded-full bg-accent-teal/15 text-accent-teal text-caption font-semibold">
                             ✓ Confirmed
                           </span>
-                        ) : isSharePaid ? (
+                        ) : isPaid ? (
                           isPayer || isAdmin ? (
                             <button
                               type="button"
                               onClick={() => handleConfirmPaid(share.id)}
                               disabled={isBusy}
-                              className="btn-primary py-1 px-3 text-caption"
+                              className="btn-primary py-1 px-3 text-caption font-semibold shadow-sm"
                             >
-                              {isBusy ? "..." : "Confirm Received"}
+                              {isBusy ? "..." : "Confirm Received ✓"}
                             </button>
                           ) : (
-                            <span className="px-2.5 py-1 rounded-full bg-accent-sand/20 text-accent-sand text-caption font-semibold">
-                              Pending Confirmation
+                            <span className="px-2.5 py-1 rounded-full bg-accent-sand/20 text-accent-sand text-caption font-medium">
+                              Pending Confirm
                             </span>
                           )
                         ) : isShareOwner ? (
@@ -237,12 +287,12 @@ export function BillDetailModal({
                             type="button"
                             onClick={() => handleMarkPaid(share.id)}
                             disabled={isBusy}
-                            className="btn-primary py-1 px-3 text-caption"
+                            className="btn-primary py-1 px-3 text-caption font-semibold"
                           >
                             {isBusy ? "..." : "Mark Paid"}
                           </button>
                         ) : (
-                          <span className="px-2.5 py-1 rounded-full bg-accent-terracotta/15 text-accent-terracotta text-caption font-medium">
+                          <span className="px-2.5 py-1 rounded-full bg-accent-coral/15 text-accent-coral text-caption font-medium">
                             Unpaid
                           </span>
                         )}
@@ -253,19 +303,19 @@ export function BillDetailModal({
               </div>
             </div>
 
-            {/* Delete Bill option for creator/admin */}
+            {/* Delete Bill for creator/admin */}
             {canDelete && (
-              <div className="pt-4 border-t border-border-subtle">
+              <div className="pt-3 border-t border-border-subtle">
                 {!showDeleteConfirm ? (
                   <button
                     type="button"
                     onClick={() => setShowDeleteConfirm(true)}
-                    className="w-full py-2.5 text-body-sm font-medium text-accent-terracotta hover:bg-accent-terracotta/10 rounded-xl transition-colors text-center"
+                    className="w-full py-2 text-body-sm font-medium text-accent-terracotta hover:bg-accent-terracotta/10 rounded-xl transition-colors text-center"
                   >
                     Delete this Bill...
                   </button>
                 ) : (
-                  <div className="p-4 rounded-2xl bg-accent-terracotta/10 border border-accent-terracotta/30 text-center space-y-2.5">
+                  <div className="p-3.5 rounded-xl bg-accent-terracotta/10 border border-accent-terracotta/30 text-center space-y-2">
                     <p className="text-body-sm font-semibold text-text-primary">
                       Delete this bill permanently?
                     </p>
@@ -274,7 +324,7 @@ export function BillDetailModal({
                         type="button"
                         onClick={() => setShowDeleteConfirm(false)}
                         disabled={isDeleting}
-                        className="flex-1 btn-secondary py-2 text-body-sm"
+                        className="flex-1 btn-secondary py-1.5 text-body-sm"
                       >
                         Cancel
                       </button>
@@ -282,7 +332,7 @@ export function BillDetailModal({
                         type="button"
                         onClick={handleDelete}
                         disabled={isDeleting}
-                        className="flex-1 px-3 py-2 rounded-xl bg-accent-terracotta text-white font-medium text-body-sm"
+                        className="flex-1 px-3 py-1.5 rounded-xl bg-accent-terracotta text-white font-medium text-body-sm"
                       >
                         {isDeleting ? "Deleting..." : "Yes, Delete"}
                       </button>

@@ -193,23 +193,55 @@ describe("Hatian Split Engine (TDD)", () => {
       expect(total).toBe(620000);
     });
 
-    it("assigns 0 share to a member who moved in after the billing period", () => {
-      const futureMember: SplitParticipant[] = [
-        { id: "user_a", name: "Alice", moveInDate: "2026-01-01" },
-        { id: "user_b", name: "Bob", moveInDate: "2026-09-01" }, // moved in next month
-      ];
+    it("calculates exact shares from explicit daysPresent entered by roommates", () => {
+      // ₱562.00 = 56,200 centavos
+      // Alice 30 days, Bob 15 days, Charlie 20 days -> Total = 65 person-days
+      const explicitDays = {
+        user_a: 30,
+        user_b: 15,
+        user_c: 20,
+      };
 
       const shares = calculateProratedSplit(
-        100000,
-        futureMember,
-        "2026-08-01",
-        "2026-08-31",
-        "user_a"
+        56200,
+        members,
+        "2026-03-21",
+        "2026-04-20",
+        "user_a",
+        explicitDays
+      );
+
+      // Alice absorbs the 1 centavo remainder: 25,938 + 1 = 25,939
+      expect(shares).toEqual([
+        { memberId: "user_a", amountCentavos: 25939 },
+        { memberId: "user_b", amountCentavos: 12969 },
+        { memberId: "user_c", amountCentavos: 17292 },
+      ]);
+
+      const total = shares.reduce((acc, s) => acc + s.amountCentavos, 0);
+      expect(total).toBe(56200);
+    });
+
+    it("assigns 0 share to a member with 0 days present", () => {
+      const explicitDays = {
+        user_a: 30,
+        user_b: 0, // was not at dorm this month
+        user_c: 30,
+      };
+
+      const shares = calculateProratedSplit(
+        60000,
+        members,
+        "2026-03-21",
+        "2026-04-20",
+        "user_a",
+        explicitDays
       );
 
       expect(shares).toEqual([
-        { memberId: "user_a", amountCentavos: 100000 },
+        { memberId: "user_a", amountCentavos: 30000 },
         { memberId: "user_b", amountCentavos: 0 },
+        { memberId: "user_c", amountCentavos: 30000 },
       ]);
     });
   });
