@@ -32,10 +32,14 @@ export const SPLIT_METHOD_LABELS: Record<string, string> = {
 export const SPRING = {
   /** For sheet modals — snappy with slight overshoot */
   sheet: { type: "spring" as const, damping: 30, stiffness: 300 },
+  /** For standard modals */
+  modal: { type: "spring" as const, damping: 30, stiffness: 300 },
   /** For tab transitions — smooth and natural */
   tab: { type: "spring" as const, damping: 25, stiffness: 200 },
   /** For micro-interactions — quick and subtle */
   micro: { type: "spring" as const, damping: 20, stiffness: 400 },
+  /** For subtle spring */
+  subtle: { type: "spring" as const, damping: 25, stiffness: 250 },
   /** For page content — gentle entry */
   page: { type: "spring" as const, damping: 28, stiffness: 180 },
   /** For list items — bouncy stagger */
