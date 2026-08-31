@@ -20,7 +20,6 @@ export function useAuth() {
     isLoading: true,
   });
 
-  // Lazily get the Supabase client only on the client side
   const supabaseRef = useRef<ReturnType<typeof getSupabaseClient> | null>(null);
 
   const getClient = useCallback(() => {
@@ -31,15 +30,55 @@ export function useAuth() {
   }, []);
 
   const fetchProfile = useCallback(
-    async (userId: string) => {
+    async (currentUser: User): Promise<Profile | null> => {
       const supabase = getClient();
       if (!supabase) return null;
-      const { data } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .single();
-      return data;
+
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", currentUser.id)
+          .maybeSingle();
+
+        if (data) return data;
+
+        // Auto-create/upsert profile if missing
+        const meta = currentUser.user_metadata;
+        const displayName =
+          meta?.full_name ||
+          meta?.name ||
+          currentUser.email?.split("@")[0] ||
+          "Roommate";
+        const avatarUrl = meta?.avatar_url || meta?.picture || null;
+
+        const { data: createdProfile, error: upsertErr } = await supabase
+          .from("profiles")
+          .upsert({
+            id: currentUser.id,
+            display_name: displayName,
+            avatar_url: avatarUrl,
+            email: currentUser.email || null,
+          })
+          .select()
+          .maybeSingle();
+
+        if (upsertErr) {
+          console.warn("Could not upsert profile:", upsertErr);
+        }
+
+        return createdProfile || {
+          id: currentUser.id,
+          display_name: displayName,
+          avatar_url: avatarUrl,
+          email: currentUser.email || null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+      } catch (err) {
+        console.error("fetchProfile error:", err);
+        return null;
+      }
     },
     [getClient]
   );
@@ -54,7 +93,7 @@ export function useAuth() {
     // Get initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
-        const profile = await fetchProfile(session.user.id);
+        const profile = await fetchProfile(session.user);
         setState({
           user: session.user,
           profile,
@@ -71,7 +110,7 @@ export function useAuth() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
-        const profile = await fetchProfile(session.user.id);
+        const profile = await fetchProfile(session.user);
         setState({
           user: session.user,
           profile,

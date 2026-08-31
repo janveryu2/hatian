@@ -201,9 +201,18 @@ export function useDorm() {
           error: null,
         });
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "Failed to load dorms";
-        console.error("useDorm error:", err);
-        setState((prev) => ({ ...prev, isLoading: false, error: message }));
+        console.warn("useDorm info / error:", err);
+        setState((prev) => ({
+          ...prev,
+          dorms: [],
+          activeDorm: null,
+          members: [],
+          activeInvites: [],
+          userMembership: null,
+          isAdmin: false,
+          isLoading: false,
+          error: null,
+        }));
       }
     },
     [getClient, user, fetchDormMembers, fetchDormInvites]

@@ -1,5 +1,5 @@
 -- ============================================
--- HATIAN — Supabase Schema Migration (Clean Single-Pass)
+-- HATIAN — Supabase Schema Migration (Non-Recursive RLS)
 -- Run this in the Supabase SQL Editor
 -- ============================================
 
@@ -8,7 +8,6 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ============================================
 -- 1. DROP EXISTING OBJECTS (FOR CLEAN RERUNS)
--- Drop tables first with CASCADE to cleanly remove triggers
 -- ============================================
 DROP TABLE IF EXISTS public.reopen_requests CASCADE;
 DROP TABLE IF EXISTS public.payments CASCADE;
@@ -25,6 +24,8 @@ DROP TABLE IF EXISTS public.profiles CASCADE;
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
 DROP FUNCTION IF EXISTS public.update_updated_at() CASCADE;
+DROP FUNCTION IF EXISTS public.get_user_dorm_ids(UUID) CASCADE;
+DROP FUNCTION IF EXISTS public.is_dorm_admin(UUID, UUID) CASCADE;
 
 -- ============================================
 -- 2. CREATE TABLES
@@ -191,8 +192,23 @@ CREATE TABLE public.reopen_requests (
 CREATE INDEX idx_reopen_requests_bill ON public.reopen_requests(bill_id);
 
 -- ============================================
--- 3. FUNCTIONS & TRIGGERS
+-- 3. HELPER FUNCTIONS & TRIGGERS (SECURITY DEFINER)
 -- ============================================
+
+-- Function to get all dorm IDs a user belongs to without RLS recursion
+CREATE OR REPLACE FUNCTION public.get_user_dorm_ids(user_uuid UUID)
+RETURNS SETOF UUID AS $$
+  SELECT dorm_id FROM public.dorm_members WHERE user_id = user_uuid;
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
+-- Function to check if a user is an admin of a dorm
+CREATE OR REPLACE FUNCTION public.is_dorm_admin(dorm_uuid UUID, user_uuid UUID)
+RETURNS BOOLEAN AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.dorm_members
+    WHERE dorm_id = dorm_uuid AND user_id = user_uuid AND role = 'admin'
+  );
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
 
 -- Function: update updated_at timestamp
 CREATE OR REPLACE FUNCTION public.update_updated_at()
@@ -234,7 +250,10 @@ BEGIN
     NEW.raw_user_meta_data->>'avatar_url',
     NEW.email
   )
-  ON CONFLICT (id) DO NOTHING;
+  ON CONFLICT (id) DO UPDATE SET
+    display_name = COALESCE(EXCLUDED.display_name, public.profiles.display_name),
+    avatar_url = COALESCE(EXCLUDED.avatar_url, public.profiles.avatar_url),
+    email = COALESCE(EXCLUDED.email, public.profiles.email);
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -245,7 +264,7 @@ CREATE TRIGGER on_auth_user_created
 
 -- ============================================
 -- 4. ROW LEVEL SECURITY (RLS) POLICIES
--- All tables exist now so subqueries work properly
+-- Non-recursive via Security Definer Helpers
 -- ============================================
 
 -- 4.1 Profiles RLS
@@ -255,17 +274,16 @@ CREATE POLICY "Users can read profiles of dorm roommates"
   ON public.profiles FOR SELECT
   USING (
     auth.uid() = id
-    OR EXISTS (
-      SELECT 1 FROM public.dorm_members dm1
-      JOIN public.dorm_members dm2 ON dm1.dorm_id = dm2.dorm_id
-      WHERE dm1.user_id = auth.uid()
-        AND dm2.user_id = profiles.id
+    OR id IN (
+      SELECT dm.user_id FROM public.dorm_members dm
+      WHERE dm.dorm_id IN (SELECT public.get_user_dorm_ids(auth.uid()))
     )
   );
 
-CREATE POLICY "Users can update own profile"
-  ON public.profiles FOR UPDATE
-  USING (auth.uid() = id);
+CREATE POLICY "Users can insert/update own profile"
+  ON public.profiles FOR ALL
+  USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id);
 
 -- 4.2 Dorms RLS
 ALTER TABLE public.dorms ENABLE ROW LEVEL SECURITY;
@@ -273,11 +291,8 @@ ALTER TABLE public.dorms ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Members can read their dorms"
   ON public.dorms FOR SELECT
   USING (
-    EXISTS (
-      SELECT 1 FROM public.dorm_members
-      WHERE dorm_members.dorm_id = dorms.id
-        AND dorm_members.user_id = auth.uid()
-    )
+    id IN (SELECT public.get_user_dorm_ids(auth.uid()))
+    OR created_by = auth.uid()
   );
 
 CREATE POLICY "Authenticated users can create dorms"
@@ -286,25 +301,11 @@ CREATE POLICY "Authenticated users can create dorms"
 
 CREATE POLICY "Admins can update dorms"
   ON public.dorms FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.dorm_members
-      WHERE dorm_members.dorm_id = dorms.id
-        AND dorm_members.user_id = auth.uid()
-        AND dorm_members.role = 'admin'
-    )
-  );
+  USING (public.is_dorm_admin(id, auth.uid()));
 
 CREATE POLICY "Admins can delete dorms"
   ON public.dorms FOR DELETE
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.dorm_members
-      WHERE dorm_members.dorm_id = dorms.id
-        AND dorm_members.user_id = auth.uid()
-        AND dorm_members.role = 'admin'
-    )
-  );
+  USING (public.is_dorm_admin(id, auth.uid()));
 
 -- 4.3 Dorm Members RLS
 ALTER TABLE public.dorm_members ENABLE ROW LEVEL SECURITY;
@@ -312,45 +313,29 @@ ALTER TABLE public.dorm_members ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Members can read dorm members"
   ON public.dorm_members FOR SELECT
   USING (
-    EXISTS (
-      SELECT 1 FROM public.dorm_members AS dm
-      WHERE dm.dorm_id = dorm_members.dorm_id
-        AND dm.user_id = auth.uid()
-    )
+    user_id = auth.uid()
+    OR dorm_id IN (SELECT public.get_user_dorm_ids(auth.uid()))
   );
 
 CREATE POLICY "Users can join dorms"
   ON public.dorm_members FOR INSERT
   WITH CHECK (
     auth.uid() = user_id
-    OR EXISTS (
-      SELECT 1 FROM public.dorm_members AS dm
-      WHERE dm.dorm_id = dorm_members.dorm_id
-        AND dm.user_id = auth.uid()
-        AND dm.role = 'admin'
-    )
+    OR public.is_dorm_admin(dorm_id, auth.uid())
   );
 
 CREATE POLICY "Admins can update members"
   ON public.dorm_members FOR UPDATE
   USING (
-    EXISTS (
-      SELECT 1 FROM public.dorm_members AS dm
-      WHERE dm.dorm_id = dorm_members.dorm_id
-        AND dm.user_id = auth.uid()
-        AND dm.role = 'admin'
-    )
+    user_id = auth.uid()
+    OR public.is_dorm_admin(dorm_id, auth.uid())
   );
 
-CREATE POLICY "Admins can remove members"
+CREATE POLICY "Admins can remove members or self leave"
   ON public.dorm_members FOR DELETE
   USING (
-    EXISTS (
-      SELECT 1 FROM public.dorm_members AS dm
-      WHERE dm.dorm_id = dorm_members.dorm_id
-        AND dm.user_id = auth.uid()
-        AND dm.role = 'admin'
-    )
+    user_id = auth.uid()
+    OR public.is_dorm_admin(dorm_id, auth.uid())
   );
 
 -- 4.4 Dorm Invites RLS
@@ -363,23 +348,12 @@ CREATE POLICY "Users can read invites by code"
 CREATE POLICY "Members can create invites"
   ON public.dorm_invites FOR INSERT
   WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM public.dorm_members
-      WHERE dorm_members.dorm_id = dorm_invites.dorm_id
-        AND dorm_members.user_id = auth.uid()
-    )
+    dorm_id IN (SELECT public.get_user_dorm_ids(auth.uid()))
   );
 
 CREATE POLICY "Admins can update invites"
   ON public.dorm_invites FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.dorm_members
-      WHERE dorm_members.dorm_id = dorm_invites.dorm_id
-        AND dorm_members.user_id = auth.uid()
-        AND dorm_members.role = 'admin'
-    )
-  );
+  USING (public.is_dorm_admin(dorm_id, auth.uid()));
 
 -- 4.5 Bill Categories RLS
 ALTER TABLE public.bill_categories ENABLE ROW LEVEL SECURITY;
@@ -388,23 +362,14 @@ CREATE POLICY "Read bill categories"
   ON public.bill_categories FOR SELECT
   USING (
     dorm_id IS NULL
-    OR EXISTS (
-      SELECT 1 FROM public.dorm_members
-      WHERE dorm_members.dorm_id = bill_categories.dorm_id
-        AND dorm_members.user_id = auth.uid()
-    )
+    OR dorm_id IN (SELECT public.get_user_dorm_ids(auth.uid()))
   );
 
 CREATE POLICY "Members can add custom categories"
   ON public.bill_categories FOR INSERT
   WITH CHECK (
     dorm_id IS NOT NULL
-    AND EXISTS (
-      SELECT 1 FROM public.dorm_members
-      WHERE dorm_members.dorm_id = bill_categories.dorm_id
-        AND dorm_members.user_id = auth.uid()
-        AND dorm_members.role = 'admin'
-    )
+    AND public.is_dorm_admin(dorm_id, auth.uid())
   );
 
 -- 4.6 Recurring Templates RLS
@@ -413,34 +378,21 @@ ALTER TABLE public.recurring_templates ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Members can read recurring templates"
   ON public.recurring_templates FOR SELECT
   USING (
-    EXISTS (
-      SELECT 1 FROM public.dorm_members
-      WHERE dorm_members.dorm_id = recurring_templates.dorm_id
-        AND dorm_members.user_id = auth.uid()
-    )
+    dorm_id IN (SELECT public.get_user_dorm_ids(auth.uid()))
   );
 
 CREATE POLICY "Members can create recurring templates"
   ON public.recurring_templates FOR INSERT
   WITH CHECK (
     auth.uid() = created_by
-    AND EXISTS (
-      SELECT 1 FROM public.dorm_members
-      WHERE dorm_members.dorm_id = recurring_templates.dorm_id
-        AND dorm_members.user_id = auth.uid()
-    )
+    AND dorm_id IN (SELECT public.get_user_dorm_ids(auth.uid()))
   );
 
 CREATE POLICY "Creator or admin can update templates"
   ON public.recurring_templates FOR UPDATE
   USING (
     auth.uid() = created_by
-    OR EXISTS (
-      SELECT 1 FROM public.dorm_members
-      WHERE dorm_members.dorm_id = recurring_templates.dorm_id
-        AND dorm_members.user_id = auth.uid()
-        AND dorm_members.role = 'admin'
-    )
+    OR public.is_dorm_admin(dorm_id, auth.uid())
   );
 
 -- 4.7 Bills RLS
@@ -449,47 +401,26 @@ ALTER TABLE public.bills ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Members can read dorm bills"
   ON public.bills FOR SELECT
   USING (
-    EXISTS (
-      SELECT 1 FROM public.dorm_members
-      WHERE dorm_members.dorm_id = bills.dorm_id
-        AND dorm_members.user_id = auth.uid()
-    )
+    dorm_id IN (SELECT public.get_user_dorm_ids(auth.uid()))
   );
 
 CREATE POLICY "Members can create bills"
   ON public.bills FOR INSERT
   WITH CHECK (
     auth.uid() = created_by
-    AND EXISTS (
-      SELECT 1 FROM public.dorm_members
-      WHERE dorm_members.dorm_id = bills.dorm_id
-        AND dorm_members.user_id = auth.uid()
-        AND dorm_members.status = 'active'
-    )
+    AND dorm_id IN (SELECT public.get_user_dorm_ids(auth.uid()))
   );
 
 CREATE POLICY "Creator or admin can update bills"
   ON public.bills FOR UPDATE
   USING (
     auth.uid() = created_by
-    OR EXISTS (
-      SELECT 1 FROM public.dorm_members
-      WHERE dorm_members.dorm_id = bills.dorm_id
-        AND dorm_members.user_id = auth.uid()
-        AND dorm_members.role = 'admin'
-    )
+    OR public.is_dorm_admin(dorm_id, auth.uid())
   );
 
 CREATE POLICY "Admins can delete bills"
   ON public.bills FOR DELETE
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.dorm_members
-      WHERE dorm_members.dorm_id = bills.dorm_id
-        AND dorm_members.user_id = auth.uid()
-        AND dorm_members.role = 'admin'
-    )
-  );
+  USING (public.is_dorm_admin(dorm_id, auth.uid()));
 
 -- 4.8 Bill Shares RLS
 ALTER TABLE public.bill_shares ENABLE ROW LEVEL SECURITY;
@@ -497,51 +428,41 @@ ALTER TABLE public.bill_shares ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Members can read bill shares"
   ON public.bill_shares FOR SELECT
   USING (
-    EXISTS (
-      SELECT 1 FROM public.bills
-      JOIN public.dorm_members ON dorm_members.dorm_id = bills.dorm_id
-      WHERE bills.id = bill_shares.bill_id
-        AND dorm_members.user_id = auth.uid()
+    bill_id IN (
+      SELECT id FROM public.bills
+      WHERE dorm_id IN (SELECT public.get_user_dorm_ids(auth.uid()))
     )
   );
 
 CREATE POLICY "Bill creator or admin can insert shares"
   ON public.bill_shares FOR INSERT
   WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM public.bills
-      JOIN public.dorm_members ON dorm_members.dorm_id = bills.dorm_id
-      WHERE bills.id = bill_shares.bill_id
-        AND dorm_members.user_id = auth.uid()
-        AND (bills.created_by = auth.uid() OR dorm_members.role = 'admin')
+    bill_id IN (
+      SELECT id FROM public.bills
+      WHERE created_by = auth.uid()
+        OR public.is_dorm_admin(dorm_id, auth.uid())
     )
   );
 
 CREATE POLICY "Members can update own share or admin can update any"
   ON public.bill_shares FOR UPDATE
   USING (
-    EXISTS (
-      SELECT 1 FROM public.bills
-      JOIN public.dorm_members ON dorm_members.dorm_id = bills.dorm_id
-      WHERE bills.id = bill_shares.bill_id
-        AND dorm_members.user_id = auth.uid()
-        AND (
-          dorm_members.id = bill_shares.member_id
-          OR bills.created_by = auth.uid()
-          OR dorm_members.role = 'admin'
-        )
+    member_id IN (
+      SELECT id FROM public.dorm_members WHERE user_id = auth.uid()
+    )
+    OR bill_id IN (
+      SELECT id FROM public.bills
+      WHERE created_by = auth.uid()
+        OR public.is_dorm_admin(dorm_id, auth.uid())
     )
   );
 
 CREATE POLICY "Admins can delete shares"
   ON public.bill_shares FOR DELETE
   USING (
-    EXISTS (
-      SELECT 1 FROM public.bills
-      JOIN public.dorm_members ON dorm_members.dorm_id = bills.dorm_id
-      WHERE bills.id = bill_shares.bill_id
-        AND dorm_members.user_id = auth.uid()
-        AND dorm_members.role = 'admin'
+    bill_id IN (
+      SELECT id FROM public.bills
+      WHERE public.is_dorm_admin(dorm_id, auth.uid())
     )
   );
 
@@ -551,11 +472,9 @@ ALTER TABLE public.bill_amendments ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Members can read amendments"
   ON public.bill_amendments FOR SELECT
   USING (
-    EXISTS (
-      SELECT 1 FROM public.bills
-      JOIN public.dorm_members ON dorm_members.dorm_id = bills.dorm_id
-      WHERE bills.id = bill_amendments.bill_id
-        AND dorm_members.user_id = auth.uid()
+    bill_id IN (
+      SELECT id FROM public.bills
+      WHERE dorm_id IN (SELECT public.get_user_dorm_ids(auth.uid()))
     )
   );
 
@@ -569,43 +488,29 @@ ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Members can read dorm payments"
   ON public.payments FOR SELECT
   USING (
-    EXISTS (
-      SELECT 1 FROM public.dorm_members
-      WHERE dorm_members.dorm_id = payments.dorm_id
-        AND dorm_members.user_id = auth.uid()
-    )
+    dorm_id IN (SELECT public.get_user_dorm_ids(auth.uid()))
   );
 
 CREATE POLICY "Senders can create payments"
   ON public.payments FOR INSERT
   WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM public.dorm_members
-      WHERE dorm_members.id = payments.from_member
-        AND dorm_members.user_id = auth.uid()
+    from_member IN (
+      SELECT id FROM public.dorm_members WHERE user_id = auth.uid()
     )
   );
 
 CREATE POLICY "Receivers can confirm payments"
   ON public.payments FOR UPDATE
   USING (
-    EXISTS (
-      SELECT 1 FROM public.dorm_members
-      WHERE dorm_members.id = payments.to_member
-        AND dorm_members.user_id = auth.uid()
+    to_member IN (
+      SELECT id FROM public.dorm_members WHERE user_id = auth.uid()
     )
+    OR public.is_dorm_admin(dorm_id, auth.uid())
   );
 
 CREATE POLICY "Admins can delete payments"
   ON public.payments FOR DELETE
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.dorm_members
-      WHERE dorm_members.dorm_id = payments.dorm_id
-        AND dorm_members.user_id = auth.uid()
-        AND dorm_members.role = 'admin'
-    )
-  );
+  USING (public.is_dorm_admin(dorm_id, auth.uid()));
 
 -- 4.11 Reopen Requests RLS
 ALTER TABLE public.reopen_requests ENABLE ROW LEVEL SECURITY;
@@ -613,11 +518,9 @@ ALTER TABLE public.reopen_requests ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Members can read reopen requests"
   ON public.reopen_requests FOR SELECT
   USING (
-    EXISTS (
-      SELECT 1 FROM public.bills
-      JOIN public.dorm_members ON dorm_members.dorm_id = bills.dorm_id
-      WHERE bills.id = reopen_requests.bill_id
-        AND dorm_members.user_id = auth.uid()
+    bill_id IN (
+      SELECT id FROM public.bills
+      WHERE dorm_id IN (SELECT public.get_user_dorm_ids(auth.uid()))
     )
   );
 
@@ -628,12 +531,10 @@ CREATE POLICY "Members can create reopen requests"
 CREATE POLICY "Admin or creator can review reopen requests"
   ON public.reopen_requests FOR UPDATE
   USING (
-    EXISTS (
-      SELECT 1 FROM public.bills
-      JOIN public.dorm_members ON dorm_members.dorm_id = bills.dorm_id
-      WHERE bills.id = reopen_requests.bill_id
-        AND dorm_members.user_id = auth.uid()
-        AND (bills.created_by = auth.uid() OR dorm_members.role = 'admin')
+    bill_id IN (
+      SELECT id FROM public.bills
+      WHERE created_by = auth.uid()
+        OR public.is_dorm_admin(dorm_id, auth.uid())
     )
   );
 
