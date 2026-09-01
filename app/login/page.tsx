@@ -26,7 +26,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-dvh flex flex-col bg-bg-base relative overflow-hidden">
+    <div className="min-h-dvh flex flex-col bg-bg-base relative overflow-hidden select-none">
       {/* Top right language toggle */}
       <div className="absolute top-6 right-5 z-20 pt-[env(safe-area-inset-top,0px)]">
         <LanguageToggle variant="header" />
@@ -35,20 +35,20 @@ export default function LoginPage() {
       {/* Decorative background ambient glows */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <motion.div
-          className="absolute -top-32 -right-32 w-96 h-96 rounded-full opacity-[0.08]"
-          style={{ background: "var(--accent-primary)" }}
+          className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] h-[340px] sm:w-[460px] sm:h-[460px] rounded-full opacity-[0.18] blur-3xl pointer-events-none"
+          style={{ background: "radial-gradient(circle, var(--accent-primary) 0%, transparent 70%)" }}
           animate={{
-            scale: [1, 1.15, 1],
-            rotate: [0, 45, 0],
+            scale: [1, 1.08, 1],
+            opacity: [0.18, 0.25, 0.18],
           }}
           transition={{
-            duration: 20,
+            duration: 6,
             repeat: Infinity,
             ease: "easeInOut",
           }}
         />
         <motion.div
-          className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full opacity-[0.06]"
+          className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full opacity-[0.06] blur-2xl pointer-events-none"
           style={{ background: "var(--accent-secondary)" }}
           animate={{
             scale: [1, 1.2, 1],
@@ -63,32 +63,41 @@ export default function LoginPage() {
         />
       </div>
 
-      {/* Content */}
-      <div className="flex-1 flex flex-col justify-end pb-16 px-6 relative z-10">
-        {/* Logo & branding area */}
-        <motion.div
-          className="mb-auto pt-24 flex flex-col items-center"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ ...SPRING.page, delay: 0.1 }}
-        >
-          {/* App icon */}
+      {/* Main Hero Content */}
+      <div className="flex-1 flex flex-col justify-between py-10 px-6 max-w-md mx-auto w-full relative z-10">
+        <div className="pt-10 sm:pt-14 flex flex-col items-center">
+          {/* Prominent Large Hero Character Illustration */}
           <motion.div
-            className="w-20 h-20 rounded-[22px] overflow-hidden mb-6 shadow-xl shadow-accent-primary/25 border border-accent-primary/30 bg-bg-card p-1.5 flex items-center justify-center"
-            initial={{ scale: 0.5, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ ...SPRING.sheet, delay: 0.2 }}
+            className="relative w-52 h-52 sm:w-64 sm:h-64 mb-4 flex items-center justify-center"
+            initial={{ scale: 0.7, opacity: 0, y: 20 }}
+            animate={{
+              scale: 1,
+              opacity: 1,
+              y: [0, -8, 0],
+            }}
+            transition={{
+              scale: { ...SPRING.sheet, delay: 0.15 },
+              opacity: { duration: 0.4 },
+              y: {
+                duration: 4.5,
+                repeat: Infinity,
+                ease: "easeInOut",
+              },
+            }}
           >
+            {/* Soft backdrop glow behind character */}
+            <div className="absolute inset-4 rounded-full bg-accent-primary/20 blur-2xl -z-10" />
+
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/brand-icon.png"
-              alt="Hatian"
-              className="w-full h-full object-contain"
+              src="/hero-main.png"
+              alt="Hatian Hero"
+              className="w-full h-full object-contain drop-shadow-[0_12px_28px_rgba(226,54,54,0.35)]"
             />
           </motion.div>
 
           <motion.h1
-            className="text-display text-text-primary text-center tracking-tight"
+            className="text-display font-bold text-text-primary text-center tracking-tight"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ ...SPRING.page, delay: 0.3 }}
@@ -96,7 +105,7 @@ export default function LoginPage() {
             Hatian
           </motion.h1>
           <motion.p
-            className="text-body text-text-secondary text-center mt-2 max-w-[280px]"
+            className="text-body text-text-secondary text-center mt-2 max-w-[300px] leading-relaxed"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ ...SPRING.page, delay: 0.4 }}
@@ -105,14 +114,14 @@ export default function LoginPage() {
               ? "Patas na hatian sa kuryente at tubig sa dorm. Wala nang gulo sa group chat."
               : "Split bills fairly with your dorm-mates. No more groupchat math."}
           </motion.p>
-        </motion.div>
+        </div>
 
-        {/* Sign in section */}
+        {/* Sign In CTA Section */}
         <motion.div
-          className="flex flex-col gap-3 max-w-sm mx-auto w-full"
+          className="flex flex-col gap-3.5 w-full mt-8"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ ...SPRING.page, delay: 0.6 }}
+          transition={{ ...SPRING.page, delay: 0.5 }}
         >
           {error && (
             <motion.div
@@ -132,8 +141,7 @@ export default function LoginPage() {
           <motion.button
             onClick={handleSignIn}
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-2xl font-semibold text-[15px] transition-all disabled:opacity-60 disabled:cursor-not-allowed bg-bg-card border border-border-hairline hover:border-accent-primary-border shadow-md text-text-primary"
-            whileHover={{ scale: 1.01 }}
+            className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-2xl font-semibold text-[15px] transition-all disabled:opacity-60 disabled:cursor-not-allowed bg-bg-card border border-border-hairline hover:border-accent-primary-border shadow-lg shadow-black/40 text-text-primary hover:scale-[1.01] active:scale-[0.98]"
             whileTap={{ scale: 0.98 }}
           >
             {isLoading ? (
@@ -161,7 +169,7 @@ export default function LoginPage() {
             <span>{isLoading ? "Signing in…" : "Continue with Google"}</span>
           </motion.button>
 
-          <p className="text-caption text-text-tertiary text-center mt-4">
+          <p className="text-caption text-text-tertiary text-center">
             By continuing, you agree to Hatian&apos;s Terms of Service
           </p>
         </motion.div>
