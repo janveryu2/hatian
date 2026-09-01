@@ -24,15 +24,13 @@ export default function RootPage() {
   return (
     <div className="min-h-dvh flex items-center justify-center bg-bg-base">
       <div className="flex flex-col items-center gap-4">
-        {/* App icon */}
-        <div
-          className="w-16 h-16 rounded-[18px] flex items-center justify-center shadow-lg shadow-accent-primary/20"
-          style={{
-            background:
-              "linear-gradient(135deg, var(--accent-primary), var(--accent-primary-hover))",
-          }}
-        >
-          <span className="text-3xl text-white font-bold">÷</span>
+        <div className="w-16 h-16 rounded-[18px] overflow-hidden flex items-center justify-center shadow-lg shadow-accent-primary/20 bg-bg-card p-1 border border-accent-primary/30">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand-icon.png"
+            alt="Hatian"
+            className="w-full h-full object-contain"
+          />
         </div>
         <div className="w-6 h-6 border-2 border-accent-primary border-t-transparent rounded-full animate-spin" />
       </div>

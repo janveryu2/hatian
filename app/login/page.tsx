@@ -74,16 +74,17 @@ export default function LoginPage() {
         >
           {/* App icon */}
           <motion.div
-            className="w-20 h-20 rounded-[22px] flex items-center justify-center mb-6 shadow-xl shadow-accent-primary/25 border border-accent-primary/30"
-            style={{
-              background:
-                "linear-gradient(135deg, var(--accent-primary), var(--accent-primary-hover))",
-            }}
+            className="w-20 h-20 rounded-[22px] overflow-hidden mb-6 shadow-xl shadow-accent-primary/25 border border-accent-primary/30 bg-bg-card p-1.5 flex items-center justify-center"
             initial={{ scale: 0.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ ...SPRING.sheet, delay: 0.2 }}
           >
-            <span className="text-4xl text-white font-bold">÷</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/brand-icon.png"
+              alt="Hatian"
+              className="w-full h-full object-contain"
+            />
           </motion.div>
 
           <motion.h1

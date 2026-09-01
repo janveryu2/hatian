@@ -23,7 +23,11 @@ export const metadata: Metadata = {
     "Track shared bills, split them fairly, and see who owes whom. Built for Filipino dorm-mates.",
   manifest: "/manifest.json",
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/icon.png", type: "image/png" },
+      { url: "/favicon.ico" },
+    ],
+    apple: "/apple-touch-icon.png",
   },
 };
 
