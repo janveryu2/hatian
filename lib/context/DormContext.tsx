@@ -357,14 +357,17 @@ export function DormProvider({ children }: { children: React.ReactNode }) {
         };
       }
 
-      if (invite.is_used) {
-        return { valid: false, error: "This invite code has already been used." };
-      }
-
       if (isInviteExpired(invite.expires_at)) {
         return {
           valid: false,
           error: "This invite code has expired (24-hour limit).",
+        };
+      }
+
+      if (invite.is_used) {
+        return {
+          valid: false,
+          error: "This invite code is no longer active.",
         };
       }
 
@@ -433,11 +436,7 @@ export function DormProvider({ children }: { children: React.ReactNode }) {
         if (joinError) throw joinError;
       }
 
-      await supabase
-        .from("dorm_invites")
-        .update({ is_used: true })
-        .eq("id", validation.invite.id);
-
+      // Invite codes remain reusable for all roommates during their 24-hour validity window
       await loadDormData(dorm.id);
       return dorm;
     },

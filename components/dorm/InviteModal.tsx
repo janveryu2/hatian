@@ -256,7 +256,7 @@ export function InviteModal({
                         <div className="flex items-center gap-2">
                           {inv.is_used ? (
                             <span className="px-2 py-0.5 rounded-md bg-accent-sage/15 text-accent-sage text-caption">
-                              Used
+                              Inactive
                             </span>
                           ) : isExp ? (
                             <span className="px-2 py-0.5 rounded-md bg-accent-terracotta/15 text-accent-terracotta text-caption">
