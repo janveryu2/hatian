@@ -21,8 +21,8 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
   // Prevent flash while checking initial session
   if (isLoading) {
     return (
-      <div className="min-h-dvh flex items-center justify-center bg-bg-primary">
-        <div className="w-6 h-6 border-2 border-accent-teal border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-dvh flex items-center justify-center bg-bg-base">
+        <div className="w-7 h-7 border-2 border-accent-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -30,7 +30,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
   if (!user) return null;
 
   return (
-    <div className="min-h-dvh bg-bg-primary flex flex-col">
+    <div className="min-h-dvh bg-bg-base flex flex-col">
       {/* Main content area — padded for bottom tab bar */}
       <main
         className="flex-1 pb-20"

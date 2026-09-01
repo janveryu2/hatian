@@ -169,17 +169,17 @@ export function MemberActionModal({
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: "100%", opacity: 0 }}
             transition={SPRING.sheet}
-            className="relative w-full max-w-lg bg-bg-card border border-border-primary rounded-t-[28px] sm:rounded-3xl p-6 shadow-2xl z-10 max-h-[90vh] overflow-y-auto"
+            className="relative w-full max-w-lg bg-bg-card border border-border-hairline rounded-t-[28px] sm:rounded-3xl p-6 shadow-2xl z-10 max-h-[90vh] overflow-y-auto"
             style={{
               paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)",
             }}
           >
-            <div className="w-10 h-1 bg-border-primary rounded-full mx-auto mb-4 sm:hidden opacity-80" />
+            <div className="w-10 h-1 bg-accent-primary-soft rounded-full mx-auto mb-4 sm:hidden opacity-80" />
 
             {/* Header with Avatar & Details */}
             <div className="flex items-start justify-between mb-5">
               <div className="flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-2xl bg-accent-teal/15 border border-accent-teal/30 flex items-center justify-center text-heading-3 font-semibold text-accent-teal uppercase overflow-hidden">
+                <div className="w-12 h-12 rounded-2xl bg-accent-primary-soft border border-accent-primary-border flex items-center justify-center text-heading-3 font-semibold text-accent-primary uppercase overflow-hidden">
                   {member.profile?.avatar_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -195,7 +195,7 @@ export function MemberActionModal({
                   <h2 className="text-heading-3 font-semibold text-text-primary flex items-center gap-2">
                     {displayName}
                     {isSelf && (
-                      <span className="text-caption px-2 py-0.5 rounded-full bg-accent-teal/15 text-accent-teal">
+                      <span className="text-caption px-2 py-0.5 rounded-full bg-accent-primary-soft text-accent-primary font-semibold">
                         {t("common.you")}
                       </span>
                     )}
@@ -215,14 +215,14 @@ export function MemberActionModal({
             </div>
 
             {error && (
-              <div className="mb-4 p-3.5 rounded-xl bg-accent-terracotta/10 border border-accent-terracotta/20 text-accent-terracotta text-body-sm">
+              <div className="mb-4 p-3.5 rounded-xl bg-accent-coral-soft border border-accent-coral/20 text-accent-coral text-body-sm">
                 {error}
               </div>
             )}
 
             {/* Meta info tags */}
             <div className="grid grid-cols-2 gap-2.5 mb-5">
-              <div className="p-3 rounded-xl bg-bg-surface border border-border-subtle">
+              <div className="p-3 rounded-xl bg-bg-surface border border-border-hairline">
                 <span className="text-caption text-text-tertiary uppercase block mb-0.5">
                   Role
                 </span>
@@ -230,7 +230,7 @@ export function MemberActionModal({
                   {member.role === "admin" ? t("dorm.adminBadge") : t("dorm.memberBadge")} {isSoleAdmin ? "(Sole Admin)" : ""}
                 </span>
               </div>
-              <div className="p-3 rounded-xl bg-bg-surface border border-border-subtle">
+              <div className="p-3 rounded-xl bg-bg-surface border border-border-hairline">
                 <span className="text-caption text-text-tertiary uppercase block mb-0.5">
                   Net Balance
                 </span>
@@ -254,11 +254,10 @@ export function MemberActionModal({
             {/* Settlement & Payment Actions */}
             {!showRemoveConfirm && (
               <div className="space-y-3 mb-4">
-                {/* 1. Pending Incoming Payment from this member needing confirmation */}
                 {pendingIncomingPayment && (
-                  <div className="p-4 rounded-2xl bg-accent-sand/15 border border-accent-sand/35 space-y-2.5">
+                  <div className="p-4 rounded-2xl bg-accent-amber-soft border border-accent-amber/35 space-y-2.5">
                     <div>
-                      <span className="text-caption font-semibold uppercase text-accent-sand block mb-1">
+                      <span className="text-caption font-semibold uppercase text-accent-amber block mb-1">
                         🔔 {t("settle.pendingIncomingTitle", { count: 1 })}
                       </span>
                       <p className="text-body-md font-bold text-text-primary">
@@ -277,7 +276,7 @@ export function MemberActionModal({
                       type="button"
                       onClick={() => handleConfirmReceipt(pendingIncomingPayment.id)}
                       disabled={isConfirmingReceipt}
-                      className="w-full btn-primary py-2.5 text-body-sm font-semibold flex items-center justify-center gap-2 shadow-md shadow-accent-teal/20"
+                      className="w-full btn-primary py-2.5 text-body-sm font-semibold flex items-center justify-center gap-2"
                     >
                       {isConfirmingReceipt ? (
                         <>
@@ -291,9 +290,8 @@ export function MemberActionModal({
                   </div>
                 )}
 
-                {/* 2. Pending Outgoing Payment to this member waiting on their confirmation */}
                 {pendingOutgoingPayment && (
-                  <div className="p-4 rounded-2xl bg-accent-sand/10 border border-accent-sand/25 flex items-center justify-between gap-3">
+                  <div className="p-4 rounded-2xl bg-accent-amber-soft border border-accent-amber/25 flex items-center justify-between gap-3">
                     <div>
                       <p className="text-body-sm font-medium text-text-primary">
                         {t("dorm.sentPendingRoommate", {
@@ -307,13 +305,12 @@ export function MemberActionModal({
                         </p>
                       )}
                     </div>
-                    <span className="px-2.5 py-1 rounded-full bg-accent-sand/20 text-accent-sand text-caption font-semibold shrink-0">
+                    <span className="px-2.5 py-1 rounded-full bg-accent-amber-soft text-accent-amber text-caption font-semibold shrink-0">
                       ⏳ {t("settle.pendingConfirmPill")}
                     </span>
                   </div>
                 )}
 
-                {/* 3. Record Payment Button to Settle With this Member */}
                 {!isSelf && onOpenRecordPayment && (
                   <button
                     type="button"
@@ -323,7 +320,7 @@ export function MemberActionModal({
                         suggestedDebtCentavos > 0 ? suggestedDebtCentavos : undefined
                       )
                     }
-                    className="w-full btn-primary py-3.5 flex items-center justify-center gap-2 shadow-lg shadow-accent-teal/15 font-semibold text-body-md"
+                    className="w-full btn-primary py-3.5 flex items-center justify-center gap-2 font-semibold text-body-md"
                   >
                     <span>💸</span>
                     <span>
@@ -345,12 +342,11 @@ export function MemberActionModal({
                   <span className="text-caption font-semibold uppercase text-text-tertiary block mb-1">
                     Admin Controls
                   </span>
-                  {/* Change Role Button */}
                   <button
                     type="button"
                     onClick={handleRoleToggle}
                     disabled={isProcessing || isSoleAdmin}
-                    className="w-full p-4 rounded-2xl bg-bg-surface border border-border-subtle hover:border-accent-teal/50 transition-colors flex items-center justify-between text-left disabled:opacity-50"
+                    className="w-full p-4 rounded-2xl bg-bg-surface border border-border-hairline hover:border-accent-primary-border transition-colors flex items-center justify-between text-left disabled:opacity-50"
                   >
                     <div>
                       <p className="text-body-md font-medium text-text-primary">
@@ -371,8 +367,7 @@ export function MemberActionModal({
                     </span>
                   </button>
 
-                  {/* Move Out / Inactive Status */}
-                  <div className="p-4 rounded-2xl bg-bg-surface border border-border-subtle space-y-3">
+                  <div className="p-4 rounded-2xl bg-bg-surface border border-border-hairline space-y-3">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-body-md font-medium text-text-primary">
@@ -400,7 +395,7 @@ export function MemberActionModal({
                           type="date"
                           value={moveOutDate}
                           onChange={(e) => setMoveOutDate(e.target.value)}
-                          className="w-full px-3 py-2 rounded-xl bg-bg-primary border border-border-subtle text-text-primary font-mono text-body-sm"
+                          className="w-full px-3 py-2 rounded-xl bg-bg-base border border-border-hairline text-text-primary font-mono text-body-sm focus:outline-none focus:border-accent-primary"
                         />
                       </div>
                     )}
@@ -417,13 +412,12 @@ export function MemberActionModal({
                     </button>
                   </div>
 
-                  {/* Remove Member Trigger */}
                   {!isSelf && (
                     <button
                       type="button"
                       onClick={() => setShowRemoveConfirm(true)}
                       disabled={isSoleAdmin}
-                      className="w-full p-3 text-accent-terracotta text-body-sm font-medium hover:bg-accent-terracotta/10 rounded-xl transition-colors text-center disabled:opacity-40"
+                      className="w-full p-3 text-accent-coral text-body-sm font-medium hover:bg-accent-coral-soft rounded-xl transition-colors text-center disabled:opacity-40"
                     >
                       Remove from Dorm...
                     </button>
@@ -431,8 +425,7 @@ export function MemberActionModal({
                 </div>
               )
             ) : (
-              /* Remove Member Confirmation & Debt Redistribution View */
-              <div className="p-5 rounded-2xl bg-accent-terracotta/10 border border-accent-terracotta/30 space-y-4">
+              <div className="p-5 rounded-2xl bg-accent-coral-soft border border-accent-coral/30 space-y-4">
                 <div className="text-center space-y-1">
                   <span className="text-3xl block">⚠️</span>
                   <p className="text-body-md font-semibold text-text-primary">
@@ -443,12 +436,11 @@ export function MemberActionModal({
                   </p>
                 </div>
 
-                {/* Active balance redistribution options */}
                 {memberBalanceCentavos !== 0 && (
-                  <div className="p-3.5 rounded-xl bg-bg-card border border-border-subtle text-left space-y-2.5">
+                  <div className="p-3.5 rounded-xl bg-bg-card border border-border-hairline text-left space-y-2.5">
                     <p className="text-caption font-semibold text-text-primary">
                       Unsettled Balance:{" "}
-                      <span className="font-mono font-bold text-accent-terracotta">
+                      <span className="font-mono font-bold text-accent-coral">
                         {formatCentavos(memberBalanceCentavos)}
                       </span>
                     </p>
@@ -533,7 +525,7 @@ export function MemberActionModal({
                     type="button"
                     onClick={handleRemove}
                     disabled={isProcessing}
-                    className="flex-1 px-4 py-2.5 rounded-xl bg-accent-terracotta text-white font-medium text-body-sm hover:opacity-90 transition-opacity"
+                    className="flex-1 px-4 py-2.5 rounded-xl bg-accent-coral text-white font-medium text-body-sm hover:opacity-90 transition-opacity"
                   >
                     {isProcessing ? "Removing..." : "Confirm Removal"}
                   </button>

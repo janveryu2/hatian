@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { SPRING, STAGGER_DELAY } from "@/lib/utils/constants";
 import { formatCentavos } from "@/lib/utils/currency";
-import { useAuth } from "@/lib/hooks/useAuth";
 import { useDorm } from "@/lib/hooks/useDorm";
 import { useSettlement } from "@/lib/hooks/useSettlement";
 import { RecordPaymentModal } from "@/components/settle/RecordPaymentModal";
@@ -33,13 +32,11 @@ const itemVariants = {
 };
 
 export default function SettlePage() {
-  const { user } = useAuth();
   const { activeDorm, members } = useDorm();
   const {
     payments,
     netBalances,
     simplifiedPlan,
-    mySimplifiedDebts,
     myNetBalance,
     myMemberId,
     isLoading,
@@ -59,12 +56,10 @@ export default function SettlePage() {
 
   const memberMap = new Map(members.map((m) => [m.id, m]));
 
-  // Payments pending confirmation by CURRENT user (where current user is receiver)
   const pendingIncomingPayments = payments.filter(
     (p) => p.to_member === myMemberId && p.status === "pending"
   );
 
-  // Outgoing payments made by CURRENT user waiting for roommate confirmation
   const pendingOutgoingPayments = payments.filter(
     (p) => p.from_member === myMemberId && p.status === "pending"
   );
@@ -110,7 +105,6 @@ export default function SettlePage() {
 
   const isOwed = myNetBalance > 0;
   const owes = myNetBalance < 0;
-  const isSettled = myNetBalance === 0;
 
   return (
     <motion.div
@@ -145,7 +139,7 @@ export default function SettlePage() {
                 setSelectedPayeeAmountPesos("");
                 setIsRecordOpen(true);
               }}
-              className="btn-primary py-2.5 px-3.5 text-body-sm flex items-center gap-1.5 shadow-lg shadow-accent-teal/15"
+              className="btn-primary py-2.5 px-3.5 text-body-sm flex items-center gap-1.5"
             >
               <span>💸</span> {t("settle.recordPaymentBtn")}
             </button>
@@ -154,7 +148,7 @@ export default function SettlePage() {
       </motion.div>
 
       {error && (
-        <div className="p-3.5 rounded-xl bg-accent-terracotta/10 border border-accent-terracotta/20 text-accent-terracotta text-body-sm">
+        <div className="p-3.5 rounded-xl bg-accent-coral-soft border border-accent-coral/20 text-accent-coral text-body-sm">
           {error}
         </div>
       )}
@@ -179,7 +173,7 @@ export default function SettlePage() {
                 ? "border-l-accent-teal"
                 : owes
                 ? "border-l-accent-coral"
-                : "border-l-accent-sage"
+                : "border-l-accent-teal"
             }`}
           >
             <div className="flex items-start justify-between">
@@ -194,7 +188,7 @@ export default function SettlePage() {
                       ? "var(--accent-teal)"
                       : owes
                       ? "var(--accent-coral)"
-                      : "var(--accent-sage)",
+                      : "var(--accent-teal)",
                   }}
                 >
                   {isOwed ? "+" : owes ? "− " : ""}
@@ -209,17 +203,17 @@ export default function SettlePage() {
                 </p>
               </div>
 
-              <div className="text-3xl p-3 rounded-2xl bg-bg-surface">
+              <div className="text-3xl p-3 rounded-2xl bg-bg-surface border border-border-hairline">
                 {isOwed ? "💰" : owes ? "📉" : "🤝"}
               </div>
             </div>
           </motion.div>
 
-          {/* Pending Confirmations Alert */}
+          {/* Pending Incoming Confirmations Alert */}
           {pendingIncomingPayments.length > 0 && (
             <motion.div
               variants={itemVariants}
-              className="p-4 rounded-2xl bg-accent-sand/15 border border-accent-sand/30 space-y-3"
+              className="p-4 rounded-2xl bg-accent-amber-soft border border-accent-amber/30 space-y-3"
             >
               <div className="flex items-center gap-2">
                 <span className="text-xl">🔔</span>
@@ -232,7 +226,7 @@ export default function SettlePage() {
                 {pendingIncomingPayments.map((p) => (
                   <div
                     key={p.id}
-                    className="p-3 rounded-xl bg-bg-card border border-border-subtle flex items-center justify-between gap-3 text-body-sm"
+                    className="p-3 rounded-xl bg-bg-card border border-border-hairline flex items-center justify-between gap-3 text-body-sm"
                   >
                     <div>
                       <p className="font-medium text-text-primary">
@@ -267,7 +261,7 @@ export default function SettlePage() {
           {pendingOutgoingPayments.length > 0 && (
             <motion.div
               variants={itemVariants}
-              className="p-4 rounded-2xl bg-accent-sand/10 border border-accent-sand/25 space-y-2.5"
+              className="p-4 rounded-2xl bg-accent-amber-soft border border-accent-amber/25 space-y-2.5"
             >
               <div className="flex items-center gap-2">
                 <span className="text-xl">⏳</span>
@@ -280,7 +274,7 @@ export default function SettlePage() {
                 {pendingOutgoingPayments.map((p) => (
                   <div
                     key={p.id}
-                    className="p-3 rounded-xl bg-bg-card border border-border-subtle flex items-center justify-between gap-3 text-body-sm"
+                    className="p-3 rounded-xl bg-bg-card border border-border-hairline flex items-center justify-between gap-3 text-body-sm"
                   >
                     <div>
                       <p className="font-medium text-text-primary">
@@ -292,7 +286,7 @@ export default function SettlePage() {
                         </p>
                       )}
                     </div>
-                    <span className="text-caption px-2.5 py-1 rounded-full bg-accent-sand/20 text-accent-sand font-medium shrink-0">
+                    <span className="text-caption px-2.5 py-1 rounded-full bg-accent-amber-soft text-accent-amber font-medium shrink-0">
                       {t("settle.waitingOnRoommate", { name: p.toName })}
                     </span>
                   </div>
@@ -307,7 +301,7 @@ export default function SettlePage() {
               <h2 className="text-heading-3 font-semibold text-text-primary">
                 {t("settle.smartSettlePlan")}
               </h2>
-              <span className="text-caption px-2 py-0.5 rounded-full bg-accent-teal/15 text-accent-teal font-medium">
+              <span className="text-caption px-2.5 py-1 rounded-full bg-accent-primary-soft text-accent-primary font-semibold">
                 {t("settle.paymentsNeeded", {
                   count: simplifiedPlan.length,
                   word: simplifiedPlan.length === 1 ? "Bayaran" : "Bayaran",
@@ -346,9 +340,9 @@ export default function SettlePage() {
                       key={idx}
                       className={`card p-4 flex items-center justify-between gap-3 ${
                         isMeSender
-                          ? "border-accent-terracotta/40 bg-accent-terracotta/5"
+                          ? "border-accent-coral/40 bg-accent-coral-soft"
                           : isMeReceiver
-                          ? "border-accent-teal/40 bg-accent-teal/5"
+                          ? "border-accent-teal/40 bg-accent-teal-soft"
                           : ""
                       }`}
                     >
@@ -365,7 +359,7 @@ export default function SettlePage() {
                             ) : (
                               <span>
                                 {t("settle.someonePays", {
-                                  from: fromName,
+                                 from: fromName,
                                   to: toName,
                                 })}
                               </span>
@@ -377,10 +371,10 @@ export default function SettlePage() {
                         </div>
                       </div>
 
-                      {/* Pay CTA or Pending Confirmation badge if current user is the debtor */}
+                      {/* Pay CTA */}
                       {isMeSender && (
                         pendingOutgoing ? (
-                          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-accent-sand/15 border border-accent-sand/30 text-accent-sand text-caption font-semibold shrink-0">
+                          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-accent-amber-soft border border-accent-amber/30 text-accent-amber text-caption font-semibold shrink-0">
                             <span>⏳</span>
                             <span>{t("settle.pendingConfirmPill")}</span>
                           </div>
@@ -393,7 +387,7 @@ export default function SettlePage() {
                                 planItem.amountCentavos
                               )
                             }
-                            className="btn-primary py-2 px-3.5 text-caption font-semibold shrink-0 shadow-md shadow-accent-teal/20"
+                            className="btn-primary py-2 px-3.5 text-caption font-semibold shrink-0"
                           >
                             {t("settle.payNowBtn")}
                           </button>
@@ -425,7 +419,7 @@ export default function SettlePage() {
                     className="p-3 flex items-center justify-between text-body-sm"
                   >
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-full bg-accent-teal/15 flex items-center justify-center font-semibold text-caption text-accent-teal uppercase overflow-hidden">
+                      <div className="w-8 h-8 rounded-full bg-accent-primary-soft flex items-center justify-center font-semibold text-caption text-accent-primary uppercase overflow-hidden">
                         {m.profile?.avatar_url ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
@@ -496,8 +490,8 @@ export default function SettlePage() {
                       <span
                         className={`text-caption font-semibold px-2 py-0.2 rounded-full ${
                           pay.status === "confirmed"
-                            ? "bg-accent-sage/20 text-accent-sage"
-                            : "bg-accent-sand/20 text-accent-sand"
+                            ? "bg-accent-teal-soft text-accent-teal"
+                            : "bg-accent-amber-soft text-accent-amber"
                         }`}
                       >
                         {pay.status === "confirmed" ? "Confirmed ✓" : "Pending"}

@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { SPRING, STAGGER_DELAY } from "@/lib/utils/constants";
 import { formatCentavos } from "@/lib/utils/currency";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useDorm } from "@/lib/hooks/useDorm";
-import { useBills, type BillWithDetails } from "@/lib/hooks/useBills";
+import { useBills } from "@/lib/hooks/useBills";
 import { CreateBillModal } from "@/components/bills/CreateBillModal";
 import { BillDetailModal } from "@/components/bills/BillDetailModal";
 import { LoadingSkeletonCard } from "@/components/ui/LoadingSkeleton";
@@ -117,7 +117,7 @@ export default function BillsPage() {
           {activeDorm && (
             <button
               onClick={() => setIsCreateOpen(true)}
-              className="btn-primary py-2.5 px-3.5 text-body-sm flex items-center gap-1.5 shadow-lg shadow-accent-teal/15"
+              className="btn-primary py-2.5 px-3.5 text-body-sm flex items-center gap-1.5"
             >
               <span>+</span> {t("bills.addBill")}
             </button>
@@ -126,7 +126,7 @@ export default function BillsPage() {
       </motion.div>
 
       {error && (
-        <div className="p-3.5 rounded-xl bg-accent-terracotta/10 border border-accent-terracotta/20 text-accent-terracotta text-body-sm">
+        <div className="p-3.5 rounded-xl bg-accent-coral-soft border border-accent-coral/20 text-accent-coral text-body-sm">
           {error}
         </div>
       )}
@@ -153,8 +153,8 @@ export default function BillsPage() {
               onClick={() => setSelectedFilter("all")}
               className={`px-3.5 py-1.5 rounded-full text-caption font-semibold shrink-0 transition-all ${
                 selectedFilter === "all"
-                  ? "bg-text-primary text-bg-primary shadow-sm"
-                  : "bg-bg-surface text-text-secondary border border-border-subtle hover:border-border-default"
+                  ? "bg-accent-primary text-white shadow-sm shadow-accent-primary/20"
+                  : "bg-bg-surface text-text-secondary border border-border-hairline hover:border-accent-primary-border"
               }`}
             >
               {t("bills.filterAll")} ({bills.length})
@@ -164,8 +164,8 @@ export default function BillsPage() {
               onClick={() => setSelectedFilter("unsettled")}
               className={`px-3.5 py-1.5 rounded-full text-caption font-semibold shrink-0 transition-all ${
                 selectedFilter === "unsettled"
-                  ? "bg-accent-terracotta text-white shadow-sm"
-                  : "bg-bg-surface text-text-secondary border border-border-subtle hover:border-border-default"
+                  ? "bg-accent-coral text-white shadow-sm"
+                  : "bg-bg-surface text-text-secondary border border-border-hairline hover:border-accent-coral/40"
               }`}
             >
               {t("bills.filterUnpaid")} ({bills.filter((b) => !b.isFullySettled).length})
@@ -175,8 +175,8 @@ export default function BillsPage() {
               onClick={() => setSelectedFilter("settled")}
               className={`px-3.5 py-1.5 rounded-full text-caption font-semibold shrink-0 transition-all ${
                 selectedFilter === "settled"
-                  ? "bg-accent-sage text-white shadow-sm"
-                  : "bg-bg-surface text-text-secondary border border-border-subtle hover:border-border-default"
+                  ? "bg-accent-teal text-white shadow-sm"
+                  : "bg-bg-surface text-text-secondary border border-border-hairline hover:border-accent-teal/40"
               }`}
             >
               {t("bills.filterPaid")} ({bills.filter((b) => b.isFullySettled).length})
@@ -188,8 +188,8 @@ export default function BillsPage() {
                 onClick={() => setSelectedFilter(cat.id)}
                 className={`px-3.5 py-1.5 rounded-full text-caption font-semibold shrink-0 flex items-center gap-1.5 transition-all ${
                   selectedFilter === cat.id
-                    ? "bg-accent-teal text-white shadow-sm"
-                    : "bg-bg-surface text-text-secondary border border-border-subtle hover:border-border-default"
+                    ? "bg-accent-primary text-white shadow-sm shadow-accent-primary/20"
+                    : "bg-bg-surface text-text-secondary border border-border-hairline hover:border-accent-primary-border"
                 }`}
               >
                 <span>{cat.icon}</span>
@@ -241,12 +241,12 @@ export default function BillsPage() {
                     key={bill.id}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setSelectedBillId(bill.id)}
-                    className="card p-4 flex flex-col gap-3 cursor-pointer hover:border-accent-teal/40 transition-colors"
+                    className="card p-4 flex flex-col gap-3 cursor-pointer hover:border-accent-primary-border transition-colors"
                   >
                     {/* Top row: Category icon, name, cycle, and total amount */}
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <span className="text-2xl p-2 rounded-xl bg-accent-teal/10">
+                        <span className="text-2xl p-2 rounded-xl bg-bg-surface border border-border-hairline">
                           {bill.category?.icon || "📋"}
                         </span>
                         <div>
@@ -256,7 +256,7 @@ export default function BillsPage() {
                           <p className="text-caption text-text-tertiary">
                             {t("bills.due", { date: bill.due_date })}
                             {isOverdue && (
-                              <span className="text-accent-terracotta font-medium ml-1">
+                              <span className="text-accent-coral font-medium ml-1">
                                 • {t("bills.overdue")}
                               </span>
                             )}
@@ -285,7 +285,7 @@ export default function BillsPage() {
                           </span>
                         </span>
                         {bill.isProvisional && (
-                          <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-accent-sand/15 text-accent-sand font-medium shrink-0">
+                          <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-accent-amber-soft text-accent-amber font-medium shrink-0">
                             {t("bills.waitingOnCount", { count: bill.unconfirmedCount })}
                           </span>
                         )}
@@ -293,19 +293,19 @@ export default function BillsPage() {
 
                       {/* User Share Pill */}
                       {isPayer ? (
-                        <span className="text-caption font-semibold text-accent-teal">
+                        <span className="text-caption font-semibold text-accent-teal px-2 py-0.5 rounded-full bg-accent-teal-soft">
                           {t("bills.youFronted")}
                         </span>
                       ) : bill.userShare ? (
                         <span
                           className={`text-caption font-semibold px-2 py-0.5 rounded-full ${
                             bill.userShare.payment_status === "confirmed"
-                              ? "bg-accent-sage/20 text-accent-sage"
+                              ? "bg-accent-teal-soft text-accent-teal"
                               : bill.userShare.payment_status === "paid"
-                              ? "bg-accent-sand/20 text-accent-sand"
+                              ? "bg-accent-amber-soft text-accent-amber"
                               : bill.userShare.payment_status === "acknowledged"
-                              ? "bg-accent-teal/15 text-accent-teal"
-                              : "bg-accent-terracotta/15 text-accent-terracotta"
+                              ? "bg-accent-primary-soft text-accent-primary"
+                              : "bg-accent-coral-soft text-accent-coral"
                           }`}
                         >
                           {bill.userShare.payment_status === "confirmed"

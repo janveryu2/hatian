@@ -43,14 +43,12 @@ export function CreateBillModal({
   onAddCategory,
 }: CreateBillModalProps) {
   const { t } = useTranslation();
-  // Category & basic bill info
   const [selectedCategoryId, setSelectedCategoryId] = useState(
     categories[0]?.id || ""
   );
   const [amountPesos, setAmountPesos] = useState("");
   const [paidById, setPaidById] = useState(currentUserId);
 
-  // Billing period dates (default: current month)
   const [periodStart, setPeriodStart] = useState(() => {
     const d = new Date();
     d.setDate(1);
@@ -68,15 +66,12 @@ export function CreateBillModal({
     return d.toISOString().split("T")[0];
   });
 
-  // Cycle days
   const cycleDays = useMemo(() => {
     return daysBetween(periodStart, periodEnd);
   }, [periodStart, periodEnd]);
 
-  // Days present per roommate (initialized to full cycle length)
   const [daysPresent, setDaysPresent] = useState<Record<string, number>>({});
 
-  // Active roommates list
   const activeMembers: SplitParticipant[] = useMemo(() => {
     return members
       .filter((m) => m.status === "active")
@@ -88,14 +83,12 @@ export function CreateBillModal({
       }));
   }, [members]);
 
-  // Total centavos
   const totalCentavos = useMemo(() => {
     const cleanStr = amountPesos.replace(/[^0-9.]/g, "");
     const parsed = parseFloat(cleanStr);
     return isNaN(parsed) || parsed <= 0 ? 0 : pesosToCentavos(parsed);
   }, [amountPesos]);
 
-  // Effective days for each roommate
   const effectiveDaysMap = useMemo(() => {
     const map: Record<string, number> = {};
     activeMembers.forEach((m) => {
@@ -107,7 +100,6 @@ export function CreateBillModal({
     return map;
   }, [activeMembers, daysPresent, cycleDays]);
 
-  // Live auto-calculated shares based on days present
   const calculation = useMemo(() => {
     if (totalCentavos <= 0 || activeMembers.length === 0) return null;
 
@@ -134,11 +126,6 @@ export function CreateBillModal({
     periodEnd,
   ]);
 
-  const totalPersonDays = useMemo(() => {
-    return Object.values(effectiveDaysMap).reduce((sum, d) => sum + d, 0);
-  }, [effectiveDaysMap]);
-
-  // Inline custom category creation
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const [newCatIcon, setNewCatIcon] = useState("📦");
@@ -199,7 +186,6 @@ export function CreateBillModal({
         }
       );
 
-      // Reset form
       setAmountPesos("");
       setDaysPresent({});
       onClose();
@@ -227,15 +213,13 @@ export function CreateBillModal({
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: "100%", opacity: 0 }}
             transition={SPRING.sheet}
-            className="relative w-full max-w-lg bg-bg-card border border-border-primary rounded-t-[28px] sm:rounded-3xl p-6 shadow-2xl z-10 max-h-[92vh] overflow-y-auto flex flex-col"
+            className="relative w-full max-w-lg bg-bg-card border border-border-hairline rounded-t-[28px] sm:rounded-3xl p-6 shadow-2xl z-10 max-h-[92vh] overflow-y-auto flex flex-col"
             style={{
               paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)",
             }}
           >
-            {/* Sheet Handle */}
-            <div className="w-10 h-1 bg-border-primary rounded-full mx-auto mb-4 sm:hidden opacity-80" />
+            <div className="w-10 h-1 bg-accent-primary-soft rounded-full mx-auto mb-4 sm:hidden opacity-80" />
 
-            {/* Header */}
             <div className="flex items-center justify-between mb-5">
               <div>
                 <h2 className="text-heading-2 font-bold text-text-primary">
@@ -255,13 +239,12 @@ export function CreateBillModal({
             </div>
 
             {error && (
-              <div className="mb-4 p-3.5 rounded-xl bg-accent-terracotta/10 border border-accent-terracotta/20 text-accent-terracotta text-body-sm">
+              <div className="mb-4 p-3.5 rounded-xl bg-accent-coral-soft border border-accent-coral/20 text-accent-coral text-body-sm">
                 {error}
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-5 flex-1">
-              {/* 1. Category Selection */}
               <div>
                 <label className="block text-caption font-semibold uppercase text-text-secondary mb-2">
                   {t("bills.categoryLabel")}
@@ -276,8 +259,8 @@ export function CreateBillModal({
                         onClick={() => setSelectedCategoryId(cat.id)}
                         className={`px-3 py-2 rounded-xl text-body-sm font-medium transition-all flex items-center gap-1.5 border ${
                           isSelected
-                            ? "bg-accent-teal text-white border-accent-teal shadow-md shadow-accent-teal/20"
-                            : "bg-bg-surface text-text-secondary border-border-subtle hover:border-accent-teal/40"
+                            ? "bg-accent-primary text-white border-accent-primary shadow-md shadow-accent-primary/20"
+                            : "bg-bg-surface text-text-secondary border-border-hairline hover:border-accent-primary-border"
                         }`}
                       >
                         <span>{cat.icon || "📦"}</span>
@@ -290,14 +273,13 @@ export function CreateBillModal({
                     <button
                       type="button"
                       onClick={() => setIsAddingCategory(true)}
-                      className="px-3 py-2 rounded-xl text-body-sm font-medium border border-dashed border-border-subtle text-text-tertiary hover:text-accent-teal hover:border-accent-teal/50 transition-colors"
+                      className="px-3 py-2 rounded-xl text-body-sm font-medium border border-dashed border-border-subtle text-text-tertiary hover:text-accent-primary hover:border-accent-primary-border transition-colors"
                     >
                       {t("bills.newCategory")}
                     </button>
                   )}
                 </div>
 
-                {/* Inline custom category input */}
                 {isAddingCategory && (
                   <div className="mt-3 p-3 rounded-xl bg-bg-surface border border-border-subtle flex items-center gap-2">
                     <input
@@ -305,7 +287,7 @@ export function CreateBillModal({
                       value={newCatIcon}
                       onChange={(e) => setNewCatIcon(e.target.value)}
                       placeholder="Icon"
-                      className="w-12 text-center text-body-md py-1.5 rounded-lg bg-bg-primary border border-border-subtle"
+                      className="w-12 text-center text-body-md py-1.5 rounded-lg bg-bg-base border border-border-subtle"
                       maxLength={2}
                     />
                     <input
@@ -313,7 +295,7 @@ export function CreateBillModal({
                       value={newCatName}
                       onChange={(e) => setNewCatName(e.target.value)}
                       placeholder={t("bills.categoryNamePlaceholder")}
-                      className="flex-1 px-3 py-1.5 text-body-sm rounded-lg bg-bg-primary border border-border-subtle text-text-primary"
+                      className="flex-1 px-3 py-1.5 text-body-sm rounded-lg bg-bg-base border border-border-subtle text-text-primary"
                     />
                     <button
                       type="button"
@@ -331,7 +313,7 @@ export function CreateBillModal({
                         setIsAddingCategory(false);
                         setNewCatName("");
                       }}
-                      className="px-3 py-1.5 rounded-lg bg-accent-teal text-white text-caption font-semibold"
+                      className="px-3 py-1.5 rounded-lg bg-accent-primary text-white text-caption font-semibold"
                     >
                       {t("common.confirm")}
                     </button>
@@ -346,7 +328,6 @@ export function CreateBillModal({
                 )}
               </div>
 
-              {/* 2. Total Amount Input */}
               <div>
                 <label className="block text-caption font-semibold uppercase text-text-secondary mb-1.5">
                   {t("bills.billAmountLabel")}
@@ -363,12 +344,11 @@ export function CreateBillModal({
                     value={amountPesos}
                     onChange={(e) => setAmountPesos(e.target.value)}
                     required
-                    className="w-full pl-10 pr-4 py-3.5 rounded-2xl bg-bg-surface border border-border-subtle text-text-primary font-mono text-heading-3 font-bold placeholder:text-text-tertiary/40 focus:border-accent-teal focus:outline-none"
+                    className="w-full pl-10 pr-4 py-3.5 rounded-2xl bg-bg-surface border border-border-hairline text-text-primary font-mono text-heading-3 font-bold placeholder:text-text-tertiary/40 focus:border-accent-primary focus:outline-none"
                   />
                 </div>
               </div>
 
-              {/* 3. Billing Period & Paid By */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-caption font-semibold uppercase text-text-secondary mb-1">
@@ -379,7 +359,7 @@ export function CreateBillModal({
                     value={periodStart}
                     onChange={(e) => setPeriodStart(e.target.value)}
                     required
-                    className="w-full px-3 py-2.5 rounded-xl bg-bg-surface border border-border-subtle text-text-primary font-mono text-body-sm focus:border-accent-teal focus:outline-none"
+                    className="w-full px-3 py-2.5 rounded-xl bg-bg-surface border border-border-hairline text-text-primary font-mono text-body-sm focus:border-accent-primary focus:outline-none"
                   />
                 </div>
                 <div>
@@ -391,12 +371,11 @@ export function CreateBillModal({
                     value={periodEnd}
                     onChange={(e) => setPeriodEnd(e.target.value)}
                     required
-                    className="w-full px-3 py-2.5 rounded-xl bg-bg-surface border border-border-subtle text-text-primary font-mono text-body-sm focus:border-accent-teal focus:outline-none"
+                    className="w-full px-3 py-2.5 rounded-xl bg-bg-surface border border-border-hairline text-text-primary font-mono text-body-sm focus:border-accent-primary focus:outline-none"
                   />
                 </div>
               </div>
 
-              {/* Paid By & Due Date row */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-caption font-semibold uppercase text-text-secondary mb-1">
@@ -405,10 +384,10 @@ export function CreateBillModal({
                   <select
                     value={paidById}
                     onChange={(e) => setPaidById(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl bg-bg-surface border border-border-subtle text-text-primary text-body-sm focus:border-accent-teal focus:outline-none"
+                    className="w-full px-3 py-2.5 rounded-xl bg-bg-surface border border-border-hairline text-text-primary text-body-sm focus:border-accent-primary focus:outline-none"
                   >
                     {activeMembers.map((m) => (
-                      <option key={m.id} value={m.id}>
+                      <option key={m.id} value={m.id} className="bg-bg-card">
                         {m.name} {m.id === currentUserId ? `(${t("common.you")})` : ""}
                       </option>
                     ))}
@@ -423,13 +402,11 @@ export function CreateBillModal({
                     value={dueDate}
                     onChange={(e) => setDueDate(e.target.value)}
                     required
-                    className="w-full px-3 py-2.5 rounded-xl bg-bg-surface border border-border-subtle text-text-primary font-mono text-body-sm focus:border-accent-teal focus:outline-none"
+                    className="w-full px-3 py-2.5 rounded-xl bg-bg-surface border border-border-hairline text-text-primary font-mono text-body-sm focus:border-accent-primary focus:outline-none"
                   />
                 </div>
               </div>
 
-              {/* 4. Roommates' Days Present (The CORE Mental Model) */}
-              {/* 4. Roommate Breakdown & Creator Days Entry */}
               <div className="pt-2">
                 <div className="flex items-center justify-between mb-2.5">
                   <div>
@@ -440,7 +417,7 @@ export function CreateBillModal({
                       {t("bills.daysPresentSub")}
                     </p>
                   </div>
-                  <span className="text-caption font-mono text-accent-teal bg-accent-teal/10 px-2.5 py-1 rounded-lg">
+                  <span className="text-caption font-mono text-accent-primary bg-accent-primary-soft px-2.5 py-1 rounded-lg font-semibold">
                     {activeMembers.length} {t("common.roommates")}
                   </span>
                 </div>
@@ -448,9 +425,6 @@ export function CreateBillModal({
                 <div className="space-y-2.5">
                   {activeMembers.map((member) => {
                     const isCreator = member.id === currentUserId;
-                    const days = isCreator
-                      ? effectiveDaysMap[member.id] ?? cycleDays
-                      : null;
                     const share = calculation?.shares.find(
                       (s) => s.memberId === member.id
                     );
@@ -461,21 +435,20 @@ export function CreateBillModal({
                         key={member.id}
                         className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 ${
                           isCreator
-                            ? "bg-bg-surface border-accent-teal/40 ring-1 ring-accent-teal/20"
-                            : "bg-bg-surface border-border-subtle opacity-90"
+                            ? "bg-bg-surface border-accent-primary-border ring-1 ring-accent-primary/20"
+                            : "bg-bg-surface border-border-hairline opacity-90"
                         }`}
                       >
-                        {/* Member Identity & Share Preview */}
                         <div className="min-w-0 flex-1">
                           <p className="text-body-md font-semibold text-text-primary truncate flex items-center gap-1.5">
                             {member.name}
                             {isCreator && (
-                              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-accent-teal/15 text-accent-teal shrink-0">
+                              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-accent-primary-soft text-accent-primary shrink-0">
                                 {t("common.you")}
                               </span>
                             )}
                             {isPayer && (
-                              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-accent-terracotta/15 text-accent-terracotta shrink-0">
+                              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-accent-teal-soft text-accent-teal shrink-0">
                                 {t("bills.paidStatus")}
                               </span>
                             )}
@@ -488,7 +461,7 @@ export function CreateBillModal({
                               <>
                                 {share ? formatCentavos(share.amountCentavos) : "₱0.00"}
                                 {!isCreator && (
-                                  <span className="text-[11px] text-accent-sand ml-1.5">
+                                  <span className="text-[11px] text-accent-amber ml-1.5">
                                     • {t("bills.pendingEntryNotice")}
                                   </span>
                                 )}
@@ -497,9 +470,8 @@ export function CreateBillModal({
                           </p>
                         </div>
 
-                        {/* Days Control for Creator vs. Pending Badge for Others */}
                         {isCreator ? (
-                          <div className="flex items-center gap-1.5 bg-bg-card border border-border-subtle rounded-xl p-1 shrink-0">
+                          <div className="flex items-center gap-1.5 bg-bg-card border border-border-hairline rounded-xl p-1 shrink-0">
                             <button
                               type="button"
                               onClick={() => handleDayChange(member.id, -1)}
@@ -535,7 +507,7 @@ export function CreateBillModal({
                             </button>
                           </div>
                         ) : (
-                          <span className="px-3 py-1.5 rounded-xl bg-bg-card border border-border-subtle font-mono text-caption text-text-tertiary shrink-0">
+                          <span className="px-3 py-1.5 rounded-xl bg-bg-card border border-border-hairline font-mono text-caption text-text-tertiary shrink-0">
                             {t("bills.pendingEntryBadge")}
                           </span>
                         )}
@@ -545,12 +517,11 @@ export function CreateBillModal({
                 </div>
               </div>
 
-              {/* Submit Button */}
               <div className="pt-2">
                 <button
                   type="submit"
                   disabled={isSubmitting || totalCentavos <= 0}
-                  className="w-full btn-primary py-3.5 text-body-md font-bold shadow-lg shadow-accent-teal/20 flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="w-full btn-primary py-3.5 text-body-md font-bold flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   {isSubmitting ? (
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />

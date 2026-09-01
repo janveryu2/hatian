@@ -49,7 +49,6 @@ export function CreateDormModal({
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -58,23 +57,21 @@ export function CreateDormModal({
             className="fixed inset-0 bg-black/60 backdrop-blur-sm"
           />
 
-          {/* Modal Card / Bottom Sheet */}
           <motion.div
             initial={{ y: "100%", opacity: 0.8 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: "100%", opacity: 0 }}
             transition={SPRING.sheet}
-            className="relative w-full max-w-lg bg-bg-card border border-border-primary rounded-t-[28px] sm:rounded-3xl p-6 shadow-2xl z-10 max-h-[90vh] overflow-y-auto"
+            className="relative w-full max-w-lg bg-bg-card border border-border-hairline rounded-t-[28px] sm:rounded-3xl p-6 shadow-2xl z-10 max-h-[90vh] overflow-y-auto"
             style={{
               paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)",
             }}
           >
-            {/* Sheet pull bar (mobile) */}
-            <div className="w-10 h-1 bg-border-primary rounded-full mx-auto mb-4 sm:hidden opacity-80" />
+            <div className="w-10 h-1 bg-accent-primary-soft rounded-full mx-auto mb-4 sm:hidden opacity-80" />
 
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-3">
-                <span className="text-2xl p-2 rounded-2xl bg-accent-teal/10 text-accent-teal">
+                <span className="text-2xl p-2 rounded-2xl bg-accent-primary-soft text-accent-primary">
                   🏠
                 </span>
                 <div>
@@ -99,7 +96,7 @@ export function CreateDormModal({
               <motion.div
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-4 p-3.5 rounded-xl bg-accent-terracotta/10 border border-accent-terracotta/20 text-accent-terracotta text-body-sm"
+                className="mb-4 p-3.5 rounded-xl bg-accent-coral-soft border border-accent-coral/20 text-accent-coral text-body-sm"
               >
                 {error}
               </motion.div>
@@ -115,7 +112,7 @@ export function CreateDormModal({
                   value={dormName}
                   onChange={(e) => setDormName(e.target.value)}
                   placeholder="e.g. Katipunan Pad 402, BGC Unit 12B"
-                  className="w-full px-4 py-3 rounded-xl bg-bg-surface border border-border-subtle text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-teal focus:ring-1 focus:ring-accent-teal transition-all text-body-md"
+                  className="w-full px-4 py-3 rounded-xl bg-bg-surface border border-border-hairline text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-primary transition-all text-body-md"
                   autoFocus
                   disabled={isSubmitting}
                 />
@@ -129,7 +126,7 @@ export function CreateDormModal({
                   type="date"
                   value={moveInDate}
                   onChange={(e) => setMoveInDate(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-bg-surface border border-border-subtle text-text-primary focus:outline-none focus:border-accent-teal focus:ring-1 focus:ring-accent-teal transition-all text-body-md font-mono"
+                  className="w-full px-4 py-3 rounded-xl bg-bg-surface border border-border-hairline text-text-primary focus:outline-none focus:border-accent-primary transition-all text-body-md font-mono"
                   disabled={isSubmitting}
                 />
                 <p className="text-caption text-text-tertiary mt-1">

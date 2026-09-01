@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SPRING } from "@/lib/utils/constants";
-import { normalizeInviteCode, formatDisplayCode } from "@/lib/utils/invite";
+import { normalizeInviteCode } from "@/lib/utils/invite";
 import type { Dorm, DormInvite } from "@/lib/supabase/types";
 import { useTranslation } from "@/lib/context/LanguageContext";
 
@@ -37,7 +37,6 @@ export function JoinDormModal({
   const [previewDorm, setPreviewDorm] = useState<Dorm | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Sync initialCode if passed from URL query
   useEffect(() => {
     if (initialCode) {
       setRawCode(initialCode);
@@ -121,16 +120,16 @@ export function JoinDormModal({
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: "100%", opacity: 0 }}
             transition={SPRING.sheet}
-            className="relative w-full max-w-lg bg-bg-card border border-border-primary rounded-t-[28px] sm:rounded-3xl p-6 shadow-2xl z-10 max-h-[90vh] overflow-y-auto"
+            className="relative w-full max-w-lg bg-bg-card border border-border-hairline rounded-t-[28px] sm:rounded-3xl p-6 shadow-2xl z-10 max-h-[90vh] overflow-y-auto"
             style={{
               paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)",
             }}
           >
-            <div className="w-10 h-1 bg-border-primary rounded-full mx-auto mb-4 sm:hidden opacity-80" />
+            <div className="w-10 h-1 bg-accent-primary-soft rounded-full mx-auto mb-4 sm:hidden opacity-80" />
 
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-3">
-                <span className="text-2xl p-2 rounded-2xl bg-accent-sand/15 text-accent-sand">
+                <span className="text-2xl p-2 rounded-2xl bg-accent-primary-soft text-accent-primary">
                   🔑
                 </span>
                 <div>
@@ -155,7 +154,7 @@ export function JoinDormModal({
               <motion.div
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-4 p-3.5 rounded-xl bg-accent-terracotta/10 border border-accent-terracotta/20 text-accent-terracotta text-body-sm"
+                className="mb-4 p-3.5 rounded-xl bg-accent-coral-soft border border-accent-coral/20 text-accent-coral text-body-sm"
               >
                 {error}
               </motion.div>
@@ -173,13 +172,13 @@ export function JoinDormModal({
                     onChange={handleCodeChange}
                     placeholder="e.g. DORM-X9K2L1"
                     maxLength={15}
-                    className="w-full px-4 py-3.5 rounded-xl bg-bg-surface border border-border-subtle text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-teal focus:ring-1 focus:ring-accent-teal transition-all text-body-lg font-mono tracking-widest uppercase font-semibold"
+                    className="w-full px-4 py-3.5 rounded-xl bg-bg-surface border border-border-hairline text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-primary transition-all text-body-lg font-mono tracking-widest uppercase font-semibold"
                     autoFocus
                     disabled={isJoining}
                   />
                   {isValidating && (
                     <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                      <div className="w-5 h-5 border-2 border-accent-teal border-t-transparent rounded-full animate-spin" />
+                      <div className="w-5 h-5 border-2 border-accent-primary border-t-transparent rounded-full animate-spin" />
                     </div>
                   )}
                 </div>
@@ -188,18 +187,17 @@ export function JoinDormModal({
                 </p>
               </div>
 
-              {/* Preview card when code is recognized */}
               {previewDorm && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={SPRING.subtle}
-                  className="p-4 rounded-2xl bg-accent-teal/10 border border-accent-teal/30 flex items-center justify-between"
+                  className="p-4 rounded-2xl bg-accent-primary-soft border border-accent-primary-border flex items-center justify-between"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-3xl">🏠</span>
+                    <span className="text-3xl text-accent-primary">🏠</span>
                     <div>
-                      <p className="text-caption text-accent-teal font-medium uppercase tracking-wider">
+                      <p className="text-caption text-accent-primary font-medium uppercase tracking-wider">
                         Found Dorm
                       </p>
                       <p className="text-heading-3 font-semibold text-text-primary">
@@ -207,7 +205,7 @@ export function JoinDormModal({
                       </p>
                     </div>
                   </div>
-                  <span className="px-2.5 py-1 rounded-full bg-accent-teal/20 text-accent-teal text-caption font-semibold">
+                  <span className="px-2.5 py-1 rounded-full bg-accent-teal-soft text-accent-teal text-caption font-semibold">
                     ✓ Valid Code
                   </span>
                 </motion.div>
@@ -221,7 +219,7 @@ export function JoinDormModal({
                   type="date"
                   value={moveInDate}
                   onChange={(e) => setMoveInDate(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-bg-surface border border-border-subtle text-text-primary focus:outline-none focus:border-accent-teal focus:ring-1 focus:ring-accent-teal transition-all text-body-md font-mono"
+                  className="w-full px-4 py-3 rounded-xl bg-bg-surface border border-border-hairline text-text-primary focus:outline-none focus:border-accent-primary transition-all text-body-md font-mono"
                   disabled={isJoining}
                 />
                 <p className="text-caption text-text-tertiary mt-1">

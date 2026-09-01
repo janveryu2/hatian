@@ -27,7 +27,6 @@ export function InviteModal({
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Latest active (non-expired & non-used) invite
   const latestValidInvite = activeInvites.find(
     (inv) => !inv.is_used && !isInviteExpired(inv.expires_at)
   );
@@ -66,7 +65,6 @@ export function InviteModal({
           url: shareUrl,
         });
       } catch {
-        // User cancelled or share failed, fallback to copy
         handleCopyLink(shareUrl);
       }
     } else {
@@ -104,16 +102,16 @@ export function InviteModal({
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: "100%", opacity: 0 }}
             transition={SPRING.sheet}
-            className="relative w-full max-w-lg bg-bg-card border border-border-primary rounded-t-[28px] sm:rounded-3xl p-6 shadow-2xl z-10 max-h-[90vh] overflow-y-auto"
+            className="relative w-full max-w-lg bg-bg-card border border-border-hairline rounded-t-[28px] sm:rounded-3xl p-6 shadow-2xl z-10 max-h-[90vh] overflow-y-auto"
             style={{
               paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)",
             }}
           >
-            <div className="w-10 h-1 bg-border-primary rounded-full mx-auto mb-4 sm:hidden opacity-80" />
+            <div className="w-10 h-1 bg-accent-primary-soft rounded-full mx-auto mb-4 sm:hidden opacity-80" />
 
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-3">
-                <span className="text-2xl p-2 rounded-2xl bg-accent-teal/10 text-accent-teal">
+                <span className="text-2xl p-2 rounded-2xl bg-accent-primary-soft text-accent-primary">
                   ✉️
                 </span>
                 <div>
@@ -135,7 +133,7 @@ export function InviteModal({
             </div>
 
             {error && (
-              <div className="mb-4 p-3.5 rounded-xl bg-accent-terracotta/10 border border-accent-terracotta/20 text-accent-terracotta text-body-sm">
+              <div className="mb-4 p-3.5 rounded-xl bg-accent-coral-soft border border-accent-coral/20 text-accent-coral text-body-sm">
                 {error}
               </div>
             )}
@@ -143,10 +141,10 @@ export function InviteModal({
             {latestValidInvite ? (
               <div className="space-y-4">
                 {/* Code display card */}
-                <div className="p-6 rounded-2xl bg-bg-surface border border-accent-teal/30 text-center relative overflow-hidden">
+                <div className="p-6 rounded-2xl bg-bg-surface border border-accent-primary-border text-center relative overflow-hidden shadow-sm">
                   <div className="absolute top-2 right-3">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-accent-teal/15 text-accent-teal text-caption font-medium">
-                      <span className="w-1.5 h-1.5 rounded-full bg-accent-teal animate-pulse" />
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-accent-primary-soft text-accent-primary text-caption font-semibold">
+                      <span className="w-1.5 h-1.5 rounded-full bg-accent-primary animate-pulse" />
                       Active (24h)
                     </span>
                   </div>
@@ -154,11 +152,11 @@ export function InviteModal({
                   <p className="text-caption text-text-tertiary uppercase tracking-wider mb-2">
                     {t("dorm.inviteCodeCardTitle")}
                   </p>
-                  <p className="text-heading-1 font-mono font-bold text-accent-teal tracking-widest my-2 select-all">
+                  <p className="text-heading-1 font-mono font-bold text-accent-primary tracking-widest my-2 select-all">
                     {currentCode}
                   </p>
                   <p className="text-caption text-text-tertiary">
-                    Expires in 24 hours • One-time use per member
+                    Expires in 24 hours • Reusable for all roommates
                   </p>
                 </div>
 
@@ -170,7 +168,7 @@ export function InviteModal({
                     className="btn-secondary flex items-center justify-center gap-2 py-3"
                   >
                     {copiedType === "code" ? (
-                      <span className="text-accent-teal font-medium">{t("dorm.copiedBtn")}</span>
+                      <span className="text-accent-primary font-semibold">{t("dorm.copiedBtn")}</span>
                     ) : (
                       <>
                         <span>📋</span> {t("dorm.copyCodeBtn")}
@@ -183,7 +181,7 @@ export function InviteModal({
                     className="btn-primary flex items-center justify-center gap-2 py-3"
                   >
                     {copiedType === "link" ? (
-                      <span className="font-medium">✓ Link Copied!</span>
+                      <span className="font-semibold">✓ Link Copied!</span>
                     ) : (
                       <>
                         <span>🔗</span> Share Link
@@ -193,8 +191,7 @@ export function InviteModal({
                 </div>
               </div>
             ) : (
-              /* No active invite state */
-              <div className="p-6 rounded-2xl bg-bg-surface border border-border-subtle text-center space-y-3">
+              <div className="p-6 rounded-2xl bg-bg-surface border border-border-hairline text-center space-y-3">
                 <p className="text-body-md font-medium text-text-primary">
                   No active invite code
                 </p>
@@ -219,7 +216,6 @@ export function InviteModal({
               </div>
             )}
 
-            {/* Quick generate fresh code button */}
             {latestValidInvite && (
               <div className="mt-4 pt-4 border-t border-border-subtle flex justify-between items-center">
                 <span className="text-caption text-text-tertiary">
@@ -229,14 +225,13 @@ export function InviteModal({
                   type="button"
                   onClick={handleGenerate}
                   disabled={isGenerating}
-                  className="text-body-sm text-accent-teal hover:underline font-medium flex items-center gap-1.5"
+                  className="text-body-sm text-accent-primary hover:underline font-semibold flex items-center gap-1.5"
                 >
                   {isGenerating ? "Generating..." : `+ ${t("dorm.newCodeBtn")}`}
                 </button>
               </div>
             )}
 
-            {/* Past / Recent Invites List */}
             {activeInvites.length > 1 && (
               <div className="mt-5 pt-4 border-t border-border-subtle">
                 <p className="text-caption font-semibold text-text-tertiary uppercase tracking-wider mb-2">
@@ -255,15 +250,15 @@ export function InviteModal({
                         </span>
                         <div className="flex items-center gap-2">
                           {inv.is_used ? (
-                            <span className="px-2 py-0.5 rounded-md bg-accent-sage/15 text-accent-sage text-caption">
+                            <span className="px-2 py-0.5 rounded-md bg-bg-card text-text-tertiary text-caption font-medium">
                               Inactive
                             </span>
                           ) : isExp ? (
-                            <span className="px-2 py-0.5 rounded-md bg-accent-terracotta/15 text-accent-terracotta text-caption">
+                            <span className="px-2 py-0.5 rounded-md bg-accent-coral-soft text-accent-coral text-caption font-medium">
                               Expired
                             </span>
                           ) : (
-                            <span className="px-2 py-0.5 rounded-md bg-accent-teal/15 text-accent-teal text-caption">
+                            <span className="px-2 py-0.5 rounded-md bg-accent-primary-soft text-accent-primary text-caption font-semibold">
                               Active
                             </span>
                           )}

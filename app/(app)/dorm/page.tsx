@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { SPRING, STAGGER_DELAY } from "@/lib/utils/constants";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useDorm, type DormMemberWithProfile } from "@/lib/hooks/useDorm";
@@ -131,7 +131,7 @@ export default function DormPage() {
           variants={itemVariants}
           className="card p-8 sm:p-10 flex flex-col items-center text-center relative overflow-hidden"
         >
-          <div className="w-20 h-20 rounded-3xl bg-accent-teal/10 border border-accent-teal/20 flex items-center justify-center text-4xl mb-5">
+          <div className="w-20 h-20 rounded-3xl bg-accent-primary-soft border border-accent-primary-border flex items-center justify-center text-4xl mb-5 text-accent-primary">
             🏠
           </div>
 
@@ -145,7 +145,7 @@ export default function DormPage() {
           <div className="flex flex-col gap-3.5 w-full max-w-[300px]">
             <button
               onClick={() => setIsCreateOpen(true)}
-              className="btn-primary w-full py-3.5 flex items-center justify-center gap-2 shadow-lg shadow-accent-teal/10"
+              className="btn-primary w-full py-3.5 flex items-center justify-center gap-2"
             >
               <span>✨</span> {t("dorm.createDormBtn")}
             </button>
@@ -185,7 +185,6 @@ export default function DormPage() {
 
   // State 2: Active Dorm Dashboard
   const activeMembers = members.filter((m) => m.status === "active");
-  const inactiveMembers = members.filter((m) => m.status === "inactive");
 
   return (
     <motion.div
@@ -232,8 +231,8 @@ export default function DormPage() {
           <span
             className={`px-3 py-1 rounded-full text-caption font-semibold uppercase tracking-wider ${
               isAdmin
-                ? "bg-accent-terracotta/15 text-accent-terracotta border border-accent-terracotta/25"
-                : "bg-accent-teal/15 text-accent-teal border border-accent-teal/25"
+                ? "bg-accent-primary-soft text-accent-primary border border-accent-primary-border"
+                : "bg-bg-surface text-text-secondary border border-border-hairline"
             }`}
           >
             {isAdmin ? t("dorm.adminBadge") : t("dorm.memberBadge")}
@@ -242,7 +241,7 @@ export default function DormPage() {
       </motion.div>
 
       {error && (
-        <div className="p-3.5 rounded-xl bg-accent-terracotta/10 border border-accent-terracotta/20 text-accent-terracotta text-body-sm">
+        <div className="p-3.5 rounded-xl bg-accent-coral-soft border border-accent-coral/20 text-accent-coral text-body-sm">
           {error}
         </div>
       )}
@@ -257,7 +256,7 @@ export default function DormPage() {
       <motion.div variants={itemVariants} className="flex gap-3">
         <button
           onClick={() => setIsInviteOpen(true)}
-          className="flex-1 btn-primary py-3.5 flex items-center justify-center gap-2 shadow-lg shadow-accent-teal/10"
+          className="flex-1 btn-primary py-3.5 flex items-center justify-center gap-2"
         >
           <span>✉️</span> {t("dorm.inviteCodeCardTitle")}
         </button>
@@ -320,12 +319,12 @@ export default function DormPage() {
                 onClick={() => {
                   setSelectedMember(member);
                 }}
-                className={`card p-4 flex items-center justify-between gap-3 transition-colors cursor-pointer hover:border-accent-teal/40 ${
+                className={`card p-4 flex items-center justify-between gap-3 transition-colors cursor-pointer hover:border-accent-primary-border ${
                   member.status === "inactive" ? "opacity-60" : ""
                 }`}
               >
                 <div className="flex items-center gap-3.5 min-w-0">
-                  <div className="w-11 h-11 rounded-2xl bg-accent-teal/10 border border-accent-teal/20 flex items-center justify-center text-heading-3 font-semibold text-accent-teal uppercase overflow-hidden shrink-0">
+                  <div className="w-11 h-11 rounded-2xl bg-accent-primary-soft border border-accent-primary-border flex items-center justify-center text-heading-3 font-semibold text-accent-primary uppercase overflow-hidden shrink-0">
                     {member.profile?.avatar_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -342,7 +341,7 @@ export default function DormPage() {
                     <p className="text-body-md font-semibold text-text-primary truncate flex items-center gap-1.5">
                       {displayName}
                       {isMe && (
-                        <span className="text-caption px-2 py-0.2 rounded-full bg-accent-teal/15 text-accent-teal shrink-0">
+                        <span className="text-caption px-2 py-0.2 rounded-full bg-accent-primary-soft text-accent-primary shrink-0">
                           {t("common.you")}
                         </span>
                       )}
@@ -357,11 +356,11 @@ export default function DormPage() {
 
                 <div className="flex items-center gap-2 shrink-0">
                   {hasPendingIncoming ? (
-                    <span className="px-2 py-0.5 rounded-full bg-accent-sand/20 text-accent-sand text-caption font-semibold animate-pulse">
+                    <span className="px-2 py-0.5 rounded-full bg-accent-amber-soft text-accent-amber text-caption font-semibold animate-pulse">
                       🔔 Confirm
                     </span>
                   ) : hasPendingOutgoing ? (
-                    <span className="px-2 py-0.5 rounded-full bg-accent-sand/15 text-accent-sand text-caption font-medium">
+                    <span className="px-2 py-0.5 rounded-full bg-accent-amber-soft text-accent-amber text-caption font-medium">
                       ⏳ Pending
                     </span>
                   ) : memberBal !== 0 ? (
@@ -382,8 +381,8 @@ export default function DormPage() {
                   <span
                     className={`px-2.5 py-1 rounded-lg text-caption font-semibold capitalize ${
                       member.role === "admin"
-                        ? "bg-accent-terracotta/15 text-accent-terracotta"
-                        : "bg-bg-surface text-text-secondary border border-border-subtle"
+                        ? "bg-accent-primary-soft text-accent-primary"
+                        : "bg-bg-surface text-text-secondary border border-border-hairline"
                     }`}
                   >
                     {member.role === "admin" ? t("dorm.adminBadge") : t("dorm.memberBadge")}
@@ -402,12 +401,12 @@ export default function DormPage() {
         {!showLeaveConfirm ? (
           <button
             onClick={() => setShowLeaveConfirm(true)}
-            className="w-full py-3 text-body-sm font-medium text-accent-terracotta hover:bg-accent-terracotta/10 rounded-xl transition-colors text-center"
+            className="w-full py-3 text-body-sm font-medium text-accent-coral hover:bg-accent-coral-soft rounded-xl transition-colors text-center"
           >
             {t("dorm.leaveDormBtn")}
           </button>
         ) : (
-          <div className="p-4 rounded-2xl bg-accent-terracotta/10 border border-accent-terracotta/30 space-y-3">
+          <div className="p-4 rounded-2xl bg-accent-coral-soft border border-accent-coral/30 space-y-3">
             <p className="text-body-sm font-semibold text-text-primary text-center">
               {t("dorm.leaveConfirmTitle", { dorm: activeDorm.name })}
             </p>
@@ -435,7 +434,7 @@ export default function DormPage() {
                   }
                 }}
                 disabled={isLeaving}
-                className="flex-1 px-3 py-2 rounded-xl bg-accent-terracotta text-white font-medium text-body-sm hover:opacity-90 transition-opacity"
+                className="flex-1 px-3 py-2 rounded-xl bg-accent-coral text-white font-medium text-body-sm hover:opacity-90 transition-opacity"
               >
                 {isLeaving ? "Leaving..." : t("dorm.yesLeaveBtn")}
               </button>

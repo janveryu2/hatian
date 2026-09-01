@@ -38,7 +38,7 @@ export function ThemeToggle({
   if (variant === "header") {
     return (
       <div
-        className={`flex items-center p-0.5 rounded-full bg-bg-surface border border-border-subtle relative shadow-sm ${className}`}
+        className={`flex items-center p-0.5 rounded-full bg-bg-surface border border-border-hairline relative shadow-sm ${className}`}
       >
         {options.map((opt) => (
           <button
@@ -56,7 +56,7 @@ export function ThemeToggle({
             {theme === opt.id && (
               <motion.div
                 layoutId="themeHeaderIndicator"
-                className="absolute inset-0 rounded-full bg-accent-teal/15 text-accent-teal border border-accent-teal/30 -z-10"
+                className="absolute inset-0 rounded-full bg-accent-primary/15 text-accent-primary border border-accent-primary/30 -z-10"
                 transition={SPRING.tab}
               />
             )}
@@ -89,7 +89,7 @@ export function ThemeToggle({
         </p>
       </div>
 
-      <div className="flex items-center p-1 rounded-2xl bg-bg-surface border border-border-subtle relative">
+      <div className="flex items-center p-1 rounded-2xl bg-bg-surface border border-border-hairline relative">
         {options.map((opt) => (
           <button
             key={opt.id}

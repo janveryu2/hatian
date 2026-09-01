@@ -91,16 +91,16 @@ export function RecordPaymentModal({
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: "100%", opacity: 0 }}
             transition={SPRING.sheet}
-            className="relative w-full max-w-lg bg-bg-card border border-border-primary rounded-t-[28px] sm:rounded-3xl p-6 shadow-2xl z-10 max-h-[90vh] overflow-y-auto"
+            className="relative w-full max-w-lg bg-bg-card border border-border-hairline rounded-t-[28px] sm:rounded-3xl p-6 shadow-2xl z-10 max-h-[90vh] overflow-y-auto"
             style={{
               paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)",
             }}
           >
-            <div className="w-10 h-1 bg-border-primary rounded-full mx-auto mb-4 sm:hidden opacity-80" />
+            <div className="w-10 h-1 bg-accent-primary-soft rounded-full mx-auto mb-4 sm:hidden opacity-80" />
 
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-3">
-                <span className="text-2xl p-2 rounded-2xl bg-accent-sage/15 text-accent-sage">
+                <span className="text-2xl p-2 rounded-2xl bg-accent-primary-soft text-accent-primary">
                   💸
                 </span>
                 <div>
@@ -122,7 +122,7 @@ export function RecordPaymentModal({
             </div>
 
             {error && (
-              <div className="mb-4 p-3.5 rounded-xl bg-accent-terracotta/10 border border-accent-terracotta/20 text-accent-terracotta text-body-sm">
+              <div className="mb-4 p-3.5 rounded-xl bg-accent-coral-soft border border-accent-coral/20 text-accent-coral text-body-sm">
                 {error}
               </div>
             )}
@@ -135,11 +135,11 @@ export function RecordPaymentModal({
                 <select
                   value={toMemberId}
                   onChange={(e) => setToMemberId(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-bg-surface border border-border-subtle text-text-primary focus:outline-none focus:border-accent-teal transition-all text-body-md"
+                  className="w-full px-4 py-3 rounded-xl bg-bg-surface border border-border-hairline text-text-primary focus:outline-none focus:border-accent-primary transition-all text-body-md"
                   required
                 >
                   {eligibleRecipients.map((m) => (
-                    <option key={m.id} value={m.id}>
+                    <option key={m.id} value={m.id} className="bg-bg-card">
                       {m.profile?.display_name ||
                         m.profile?.email ||
                         t("common.roommate")}
@@ -163,7 +163,7 @@ export function RecordPaymentModal({
                     value={amountPesos}
                     onChange={(e) => setAmountPesos(e.target.value)}
                     placeholder="0.00"
-                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-bg-surface border border-border-subtle text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-teal transition-all text-currency-md font-mono font-bold"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-bg-surface border border-border-hairline text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-primary transition-all text-currency-md font-mono font-bold"
                     required
                     autoFocus
                     disabled={isSubmitting}
@@ -180,7 +180,7 @@ export function RecordPaymentModal({
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   placeholder={t("settle.notePlaceholder")}
-                  className="w-full px-4 py-3 rounded-xl bg-bg-surface border border-border-subtle text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-teal transition-all text-body-md"
+                  className="w-full px-4 py-3 rounded-xl bg-bg-surface border border-border-hairline text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-secondary transition-all text-body-md"
                   disabled={isSubmitting}
                 />
               </div>

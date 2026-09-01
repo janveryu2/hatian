@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/hooks/useAuth";
 import { useDorm } from "@/lib/hooks/useDorm";
 import { useBills } from "@/lib/hooks/useBills";
 import { useSettlement } from "@/lib/hooks/useSettlement";
-import { getGreeting, formatToday } from "@/lib/utils/dates";
+import { formatToday } from "@/lib/utils/dates";
 import { formatCentavos } from "@/lib/utils/currency";
 import { SPRING, STAGGER_DELAY } from "@/lib/utils/constants";
 
@@ -101,7 +101,7 @@ export default function HomePage() {
           {activeDorm && (
             <Link
               href="/dorm"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-bg-surface border border-border-subtle hover:border-accent-teal/40 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-bg-surface border border-border-hairline hover:border-accent-primary-border transition-colors"
             >
               <span className="text-body-sm">🏠</span>
               <span className="text-body-sm font-medium text-text-primary max-w-[100px] truncate">
@@ -116,10 +116,10 @@ export default function HomePage() {
       {!isDormLoading && !activeDorm && (
         <motion.div
           variants={itemVariants}
-          className="p-5 rounded-3xl bg-gradient-to-r from-accent-teal/15 via-accent-sand/10 to-transparent border border-accent-teal/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+          className="p-5 rounded-3xl bg-gradient-to-r from-accent-primary-soft via-accent-sand/10 to-transparent border border-accent-primary-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
         >
           <div className="flex items-center gap-3.5">
-            <span className="text-3xl p-2 rounded-2xl bg-accent-teal/20">🏠</span>
+            <span className="text-3xl p-2 rounded-2xl bg-accent-primary-soft text-accent-primary">🏠</span>
             <div>
               <p className="text-body-md font-semibold text-text-primary">
                 {t("home.joinOrCreateDorm")}
@@ -187,7 +187,7 @@ export default function HomePage() {
               {activeMembers.slice(0, 3).map((m, idx) => (
                 <div
                   key={m.id}
-                  className="inline-block h-8 w-8 rounded-full ring-2 ring-bg-card bg-accent-teal/20 text-accent-teal font-semibold text-caption flex items-center justify-center uppercase overflow-hidden"
+                  className="inline-block h-8 w-8 rounded-full ring-2 ring-bg-card bg-accent-primary-soft text-accent-primary font-semibold text-caption flex items-center justify-center uppercase overflow-hidden"
                   style={{ zIndex: 3 - idx }}
                 >
                   {m.profile?.avatar_url ? (
@@ -215,7 +215,7 @@ export default function HomePage() {
 
           <Link
             href="/dorm"
-            className="text-body-sm text-accent-teal font-medium hover:underline flex items-center gap-1"
+            className="text-body-sm text-accent-primary font-semibold hover:underline flex items-center gap-1"
           >
             {t("home.manageDorm")}
           </Link>
@@ -230,7 +230,7 @@ export default function HomePage() {
           </h2>
           <Link
             href="/bills"
-            className="text-body-sm text-accent-teal font-medium hover:underline"
+            className="text-body-sm text-accent-primary font-semibold hover:underline"
           >
             {t("home.viewAll", { count: bills.length })}
           </Link>
@@ -256,10 +256,10 @@ export default function HomePage() {
                 <Link
                   key={b.id}
                   href="/bills"
-                  className="card p-3.5 flex items-center justify-between gap-3 hover:border-accent-teal/40 transition-colors"
+                  className="card p-3.5 flex items-center justify-between gap-3 hover:border-accent-primary-border transition-colors"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <span className="text-2xl p-1.5 rounded-xl bg-accent-teal/10">
+                    <span className="text-2xl p-1.5 rounded-xl bg-bg-surface border border-border-hairline">
                       {b.category?.icon || "📋"}
                     </span>
                     <div className="min-w-0">
@@ -274,7 +274,7 @@ export default function HomePage() {
 
                   <div className="text-right shrink-0">
                     {isPayer ? (
-                      <span className="text-caption font-semibold text-accent-teal px-2 py-0.5 rounded-full bg-accent-teal/10">
+                      <span className="text-caption font-semibold text-accent-teal px-2 py-0.5 rounded-full bg-accent-teal-soft">
                         {t("bills.youFronted")}
                       </span>
                     ) : myShare ? (
@@ -311,7 +311,7 @@ export default function HomePage() {
           </h2>
           <Link
             href="/settle"
-            className="text-body-sm text-accent-teal font-medium hover:underline"
+            className="text-body-sm text-accent-primary font-semibold hover:underline"
           >
             {t("home.settleHub")}
           </Link>
@@ -346,7 +346,7 @@ export default function HomePage() {
                   <p className="font-mono font-bold text-text-primary text-body-sm">
                     {formatCentavos(p.amount_centavos)}
                   </p>
-                  <span className="text-caption text-accent-sage font-medium">
+                  <span className="text-caption text-accent-teal font-medium">
                     {p.status === "confirmed" ? "✓ " + t("bills.confirmedDaysBadge") : t("bills.pendingStatus")}
                   </span>
                 </div>

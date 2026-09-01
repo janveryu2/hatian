@@ -31,7 +31,7 @@ export function LanguageToggle({
           </p>
         </div>
 
-        <div className="flex items-center p-1 rounded-2xl bg-bg-surface border border-border-subtle relative">
+        <div className="flex items-center p-1 rounded-2xl bg-bg-surface border border-border-hairline relative">
           <button
             type="button"
             onClick={() => setLanguage("en")}
@@ -72,7 +72,7 @@ export function LanguageToggle({
 
   return (
     <div
-      className={`flex items-center p-0.5 rounded-full bg-bg-surface border border-border-subtle relative shadow-sm ${className}`}
+      className={`flex items-center p-0.5 rounded-full bg-bg-surface border border-border-hairline relative shadow-sm ${className}`}
     >
       <button
         type="button"
@@ -88,7 +88,7 @@ export function LanguageToggle({
         {language === "en" && (
           <motion.div
             layoutId="languageHeaderIndicator"
-            className="absolute inset-0 rounded-full bg-accent-teal/15 text-accent-teal border border-accent-teal/30 -z-10"
+            className="absolute inset-0 rounded-full bg-accent-primary/15 text-accent-primary border border-accent-primary/30 -z-10"
             transition={SPRING.tab}
           />
         )}
@@ -108,7 +108,7 @@ export function LanguageToggle({
         {language === "tl" && (
           <motion.div
             layoutId="languageHeaderIndicator"
-            className="absolute inset-0 rounded-full bg-accent-teal/15 text-accent-teal border border-accent-teal/30 -z-10"
+            className="absolute inset-0 rounded-full bg-accent-primary/15 text-accent-primary border border-accent-primary/30 -z-10"
             transition={SPRING.tab}
           />
         )}

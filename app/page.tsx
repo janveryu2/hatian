@@ -22,19 +22,19 @@ export default function RootPage() {
   }, [user, isLoading, router]);
 
   return (
-    <div className="min-h-dvh flex items-center justify-center bg-bg-primary">
+    <div className="min-h-dvh flex items-center justify-center bg-bg-base">
       <div className="flex flex-col items-center gap-4">
         {/* App icon */}
         <div
-          className="w-16 h-16 rounded-[18px] flex items-center justify-center"
+          className="w-16 h-16 rounded-[18px] flex items-center justify-center shadow-lg shadow-accent-primary/20"
           style={{
             background:
-              "linear-gradient(135deg, var(--accent-teal), var(--accent-teal-hover))",
+              "linear-gradient(135deg, var(--accent-primary), var(--accent-primary-hover))",
           }}
         >
-          <span className="text-3xl">÷</span>
+          <span className="text-3xl text-white font-bold">÷</span>
         </div>
-        <div className="w-6 h-6 border-2 border-accent-teal border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-accent-primary border-t-transparent rounded-full animate-spin" />
       </div>
     </div>
   );

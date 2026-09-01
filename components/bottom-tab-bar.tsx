@@ -9,7 +9,6 @@ import { useTranslation } from "@/lib/context/LanguageContext";
 interface TabItem {
   href: string;
   label: string;
-  /** Matches any path starting with this prefix */
   matchPrefix: string;
   icon: (active: boolean) => React.ReactNode;
 }
@@ -104,22 +103,10 @@ export function BottomTabBar() {
   const { t } = useTranslation();
 
   const tabs: TabItem[] = [
-    {
-      ...TABS[0],
-      label: t("nav.home"),
-    },
-    {
-      ...TABS[1],
-      label: t("nav.bills"),
-    },
-    {
-      ...TABS[2],
-      label: t("nav.settle"),
-    },
-    {
-      ...TABS[3],
-      label: t("nav.dorm"),
-    },
+    { ...TABS[0], label: t("nav.home") },
+    { ...TABS[1], label: t("nav.bills") },
+    { ...TABS[2], label: t("nav.settle") },
+    { ...TABS[3], label: t("nav.dorm") },
   ];
 
   const activeIndex = tabs.findIndex((tab) =>
@@ -128,20 +115,21 @@ export function BottomTabBar() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40 glass border-t border-border-primary"
+      className="fixed bottom-0 left-0 right-0 z-40 glass border-t border-border-hairline"
       style={{
         paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 6px)",
       }}
     >
       <div className="relative flex items-center justify-around h-14 max-w-lg mx-auto px-2">
-        {/* Animated active indicator */}
+        {/* Active indicator bar — Crimson brand red */}
         {activeIndex >= 0 && (
           <motion.div
             className="absolute top-0 h-[2.5px] rounded-full"
             style={{
               width: `${(100 / tabs.length) * 0.5}%`,
               left: `${(activeIndex * 100) / tabs.length + (100 / tabs.length) * 0.25}%`,
-              background: "var(--accent-teal)",
+              background: "var(--accent-primary)",
+              boxShadow: "0 0 8px var(--accent-primary-glow)",
             }}
             layoutId="tab-indicator"
             transition={SPRING.tab}
@@ -164,7 +152,7 @@ export function BottomTabBar() {
                 <motion.div
                   animate={{
                     color: isActive
-                      ? "var(--accent-teal)"
+                      ? "var(--accent-primary)"
                       : "var(--text-tertiary)",
                     scale: isActive ? 1.05 : 1,
                   }}
@@ -176,7 +164,7 @@ export function BottomTabBar() {
                   className="text-[11px] font-semibold tracking-tight"
                   animate={{
                     color: isActive
-                      ? "var(--accent-teal)"
+                      ? "var(--accent-primary)"
                       : "var(--text-tertiary)",
                     opacity: isActive ? 1 : 0.8,
                   }}

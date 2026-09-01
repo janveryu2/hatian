@@ -1,44 +1,56 @@
 @import "tailwindcss";
 
 /* ============================================
-   HATIAN DESIGN TOKENS
-   Warm, home-feeling palette — not corporate SaaS
+   HATIAN — CRIMSON DESIGN SYSTEM
+   Dark-first hero-tech aesthetic.
+   Brand: Crimson Red. Semantic finance: teal/coral preserved.
    ============================================ */
 
 :root {
-  /* Base surfaces — Refined Light Mode (Calm off-white) */
+  /* Base Surfaces — Light Mode */
+  --bg-base: #F8F9FA;
   --bg-primary: #F8F9FA;
   --bg-secondary: #F1F3F5;
   --bg-tertiary: #E9ECEF;
-  --bg-surface: #F8F9FA;
+  --bg-surface: #FFFFFF;
   --bg-card: #FFFFFF;
   --bg-elevated: #FFFFFF;
 
-  /* Text — High Contrast Crisp Charcoal */
+  /* Text — Light Mode */
   --text-primary: #0F172A;
   --text-secondary: #475569;
   --text-tertiary: #94A3B8;
   --text-inverse: #FFFFFF;
 
-  /* Accent — Teal (settled / owed to you) */
+  /* Brand Accent: Crimson Red (Light Mode)
+     #C62828 on #F8F9FA = 5.5:1 ratio — WCAG AA */
+  --accent-primary: #C62828;
+  --accent-primary-hover: #B71C1C;
+  --accent-primary-glow: rgba(198, 40, 40, 0.20);
+  --accent-primary-soft: rgba(198, 40, 40, 0.10);
+  --accent-primary-border: rgba(198, 40, 40, 0.25);
+
+  /* Micro-interaction: Electric Cyan (focus rings, success pulses only) */
+  --accent-secondary: #00ACC1;
+  --accent-secondary-soft: rgba(0, 172, 193, 0.12);
+
+  /* Semantic Finance Colors (PRESERVED — not remapped to brand red)
+     Teal = owed to you (positive) | Coral = you owe (negative) */
   --accent-teal: #0D9488;
   --accent-teal-soft: rgba(13, 148, 136, 0.10);
   --accent-teal-hover: #0F766E;
   --accent-sage: #0D9488;
   --accent-sage-soft: rgba(13, 148, 136, 0.10);
 
-  /* Accent — Coral (you owe / unpaid) */
   --accent-coral: #E11D48;
   --accent-coral-soft: rgba(225, 29, 72, 0.08);
   --accent-coral-hover: #BE123C;
 
-  /* Accent — Amber (pending / action required) */
   --accent-amber: #D97706;
   --accent-amber-soft: rgba(217, 119, 6, 0.10);
   --accent-sand: #D97706;
   --accent-terracotta: #EA580C;
 
-  /* Accent — Slate blue (info) */
   --accent-blue: #2563EB;
   --accent-blue-soft: rgba(37, 99, 235, 0.08);
 
@@ -46,16 +58,20 @@
   --border-primary: #E2E8F0;
   --border-secondary: #F1F5F9;
   --border-subtle: #E2E8F0;
+  --border-hairline: rgba(0, 0, 0, 0.08);
+  --border-accent: rgba(198, 40, 40, 0.20);
 
-  /* Shadows — Subtle iOS style */
+  /* Shadows */
   --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.03);
   --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.05), 0 2px 4px rgba(15, 23, 42, 0.02);
   --shadow-lg: 0 10px 25px rgba(15, 23, 42, 0.08), 0 4px 10px rgba(15, 23, 42, 0.03);
   --shadow-sheet: 0 -10px 40px rgba(15, 23, 42, 0.12);
+  --shadow-glow-red: 0 0 0 rgba(198, 40, 40, 0);
+  --shadow-card-hover: 0 8px 24px rgba(198, 40, 40, 0.12), 0 2px 8px rgba(15, 23, 42, 0.08);
 
   /* Glass */
   --glass-bg: rgba(248, 249, 250, 0.85);
-  --glass-border: rgba(226, 232, 240, 0.8);
+  --glass-border: rgba(0, 0, 0, 0.08);
 
   /* Category colors */
   --cat-internet: #2563EB;
@@ -76,21 +92,40 @@
 }
 
 /* ============================================
-   DARK MODE — Refined Slate Obsidian
+   DARK MODE — CRIMSON OBSIDIAN
+   Deep vanta black, crimson brand accent
    ============================================ */
 [data-theme="dark"] {
-  --bg-primary: #080C14;
-  --bg-secondary: #0E1524;
-  --bg-tertiary: #162035;
-  --bg-surface: #0E1524;
-  --bg-card: #121A2D;
-  --bg-elevated: #18233C;
+  --bg-base: #09090B;
+  --bg-primary: #09090B;
+  --bg-secondary: #0E0E14;
+  --bg-tertiary: #141419;
+  --bg-surface: #121217;
+  --bg-card: #16161D;
+  --bg-elevated: #1C1C25;
 
-  --text-primary: #F8FAFC;
-  --text-secondary: #94A3B8;
-  --text-tertiary: #64748B;
-  --text-inverse: #080C14;
+  /* Text — Dark Mode
+     #F8F9FA on #09090B = 18.8:1 (AAA)
+     #A0AAB2 on #09090B = 5.3:1 (AA) */
+  --text-primary: #F8F9FA;
+  --text-secondary: #A0AAB2;
+  --text-tertiary: #6B7280;
+  --text-inverse: #09090B;
 
+  /* Brand Accent: Crimson Red (Dark Mode)
+     #E23636 on #09090B = 4.8:1 — passes WCAG AA for UI components */
+  --accent-primary: #E23636;
+  --accent-primary-hover: #FF4444;
+  --accent-primary-glow: rgba(226, 54, 54, 0.25);
+  --accent-primary-soft: rgba(226, 54, 54, 0.12);
+  --accent-primary-border: rgba(226, 54, 54, 0.30);
+
+  /* Micro-interaction: Electric Cyan
+     #00E5FF on #09090B = 12.9:1 (AAA) — focus rings only */
+  --accent-secondary: #00E5FF;
+  --accent-secondary-soft: rgba(0, 229, 255, 0.12);
+
+  /* Semantic Finance — Dark Mode */
   --accent-teal: #14B8A6;
   --accent-teal-soft: rgba(20, 184, 166, 0.14);
   --accent-teal-hover: #2DD4BF;
@@ -109,18 +144,26 @@
   --accent-blue: #60A5FA;
   --accent-blue-soft: rgba(96, 165, 250, 0.14);
 
+  /* Borders */
   --border-primary: rgba(255, 255, 255, 0.08);
   --border-secondary: rgba(255, 255, 255, 0.04);
-  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-hairline: rgba(255, 255, 255, 0.08);
+  --border-accent: rgba(226, 54, 54, 0.30);
 
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.2);
-  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.25);
-  --shadow-sheet: 0 -12px 48px rgba(0, 0, 0, 0.6);
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.6), 0 4px 12px rgba(0, 0, 0, 0.35);
+  --shadow-sheet: 0 -12px 48px rgba(0, 0, 0, 0.7);
+  --shadow-glow-red: 0 0 20px rgba(226, 54, 54, 0.18), 0 0 40px rgba(226, 54, 54, 0.08), 0 4px 16px rgba(0, 0, 0, 0.5);
+  --shadow-card-hover: 0 8px 24px rgba(226, 54, 54, 0.15), 0 2px 8px rgba(0, 0, 0, 0.5);
 
-  --glass-bg: rgba(8, 12, 20, 0.85);
+  /* Glass */
+  --glass-bg: rgba(18, 18, 23, 0.75);
   --glass-border: rgba(255, 255, 255, 0.08);
 
+  /* Category colors */
   --cat-internet: #60A5FA;
   --cat-water: #14B8A6;
   --cat-electricity: #FBBF24;
@@ -128,24 +171,36 @@
   --cat-other: #94A3B8;
 }
 
-/* Also support system preference when no explicit data-theme is set */
+/* System dark preference */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg-primary: #080C14;
-    --bg-secondary: #0E1524;
-    --bg-tertiary: #162035;
-    --bg-surface: #0E1524;
-    --bg-card: #121A2D;
-    --bg-elevated: #18233C;
+    --bg-base: #09090B;
+    --bg-primary: #09090B;
+    --bg-secondary: #0E0E14;
+    --bg-tertiary: #141419;
+    --bg-surface: #121217;
+    --bg-card: #16161D;
+    --bg-elevated: #1C1C25;
 
-    --text-primary: #F8FAFC;
-    --text-secondary: #94A3B8;
-    --text-tertiary: #64748B;
-    --text-inverse: #080C14;
+    --text-primary: #F8F9FA;
+    --text-secondary: #A0AAB2;
+    --text-tertiary: #6B7280;
+    --text-inverse: #09090B;
+
+    --accent-primary: #E23636;
+    --accent-primary-hover: #FF4444;
+    --accent-primary-glow: rgba(226, 54, 54, 0.25);
+    --accent-primary-soft: rgba(226, 54, 54, 0.12);
+    --accent-primary-border: rgba(226, 54, 54, 0.30);
+
+    --accent-secondary: #00E5FF;
+    --accent-secondary-soft: rgba(0, 229, 255, 0.12);
 
     --accent-teal: #14B8A6;
     --accent-teal-soft: rgba(20, 184, 166, 0.14);
     --accent-teal-hover: #2DD4BF;
+    --accent-sage: #14B8A6;
+    --accent-sage-soft: rgba(20, 184, 166, 0.14);
 
     --accent-coral: #FB7185;
     --accent-coral-soft: rgba(251, 113, 133, 0.14);
@@ -161,14 +216,18 @@
 
     --border-primary: rgba(255, 255, 255, 0.08);
     --border-secondary: rgba(255, 255, 255, 0.04);
-    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-subtle: rgba(255, 255, 255, 0.06);
+    --border-hairline: rgba(255, 255, 255, 0.08);
+    --border-accent: rgba(226, 54, 54, 0.30);
 
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
-    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.2);
-    --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.25);
-    --shadow-sheet: 0 -12px 48px rgba(0, 0, 0, 0.6);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.6), 0 4px 12px rgba(0, 0, 0, 0.35);
+    --shadow-sheet: 0 -12px 48px rgba(0, 0, 0, 0.7);
+    --shadow-glow-red: 0 0 20px rgba(226, 54, 54, 0.18), 0 0 40px rgba(226, 54, 54, 0.08), 0 4px 16px rgba(0, 0, 0, 0.5);
+    --shadow-card-hover: 0 8px 24px rgba(226, 54, 54, 0.15), 0 2px 8px rgba(0, 0, 0, 0.5);
 
-    --glass-bg: rgba(8, 12, 20, 0.85);
+    --glass-bg: rgba(18, 18, 23, 0.75);
     --glass-border: rgba(255, 255, 255, 0.08);
 
     --cat-internet: #60A5FA;
@@ -186,26 +245,40 @@
   --color-bg-primary: var(--bg-primary);
   --color-bg-secondary: var(--bg-secondary);
   --color-bg-tertiary: var(--bg-tertiary);
+  --color-bg-surface: var(--bg-surface);
   --color-bg-card: var(--bg-card);
   --color-bg-elevated: var(--bg-elevated);
+  --color-bg-base: var(--bg-base);
 
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-text-tertiary: var(--text-tertiary);
   --color-text-inverse: var(--text-inverse);
 
+  --color-accent-primary: var(--accent-primary);
+  --color-accent-primary-hover: var(--accent-primary-hover);
+  --color-accent-primary-soft: var(--accent-primary-soft);
+  --color-accent-secondary: var(--accent-secondary);
+  --color-accent-secondary-soft: var(--accent-secondary-soft);
+
   --color-accent-teal: var(--accent-teal);
   --color-accent-teal-soft: var(--accent-teal-soft);
   --color-accent-sage: var(--accent-sage);
+  --color-accent-sage-soft: var(--accent-sage-soft);
   --color-accent-coral: var(--accent-coral);
   --color-accent-coral-soft: var(--accent-coral-soft);
   --color-accent-amber: var(--accent-amber);
   --color-accent-amber-soft: var(--accent-amber-soft);
+  --color-accent-sand: var(--accent-sand);
+  --color-accent-terracotta: var(--accent-terracotta);
   --color-accent-blue: var(--accent-blue);
   --color-accent-blue-soft: var(--accent-blue-soft);
 
   --color-border-primary: var(--border-primary);
   --color-border-secondary: var(--border-secondary);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-hairline: var(--border-hairline);
+  --color-border-accent: var(--border-accent);
 
   --color-glass-bg: var(--glass-bg);
   --color-glass-border: var(--glass-border);
@@ -228,82 +301,103 @@
 }
 
 html {
-  background: var(--bg-primary);
+  background: var(--bg-base);
   color: var(--text-primary);
 }
 
 body {
-  background: var(--bg-primary);
+  background: var(--bg-base);
   color: var(--text-primary);
   font-family: var(--font-outfit), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Safe area for Capacitor */
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
 }
 
+/* Subtle radial spotlight texture — 5% opacity, texture not decoration */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100vw;
+  height: 50vh;
+  background: radial-gradient(ellipse at top, rgba(226, 54, 54, 0.05) 0%, transparent 65%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+[data-theme="light"] body::before {
+  background: radial-gradient(ellipse at top, rgba(198, 40, 40, 0.03) 0%, transparent 65%);
+}
+
 /* ============================================
    TYPOGRAPHY SCALE
-   Based on 1.25 ratio (Major Third)
    ============================================ */
 .text-display {
-  font-size: 2rem;       /* 32px */
+  font-size: 2rem;
   line-height: 1.15;
   font-weight: 700;
   letter-spacing: -0.02em;
 }
 
 .text-heading-1 {
-  font-size: 1.6rem;     /* ~25.6px */
+  font-size: 1.6rem;
   line-height: 1.2;
   font-weight: 700;
   letter-spacing: -0.015em;
 }
 
 .text-heading-2 {
-  font-size: 1.28rem;    /* ~20.5px */
+  font-size: 1.28rem;
   line-height: 1.25;
   font-weight: 600;
   letter-spacing: -0.01em;
 }
 
 .text-heading-3 {
-  font-size: 1.024rem;   /* ~16.4px */
+  font-size: 1.024rem;
   line-height: 1.3;
   font-weight: 600;
 }
 
 .text-body {
-  font-size: 0.9375rem;  /* 15px — slightly smaller than 16 for density */
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.text-body-md {
+  font-size: 0.9375rem;
   line-height: 1.5;
   font-weight: 400;
 }
 
 .text-body-sm {
-  font-size: 0.8125rem;  /* 13px */
+  font-size: 0.8125rem;
   line-height: 1.45;
   font-weight: 400;
 }
 
 .text-caption {
-  font-size: 0.6875rem;  /* 11px */
+  font-size: 0.6875rem;
   line-height: 1.4;
   font-weight: 500;
   letter-spacing: 0.02em;
   text-transform: uppercase;
 }
 
-/* Tabular numbers for currency — prevents jitter on updates */
+/* Tabular numbers for currency — prevents jitter on live updates */
 .font-tabular {
   font-family: var(--font-jetbrains-mono), 'SF Mono', 'Cascadia Mono', monospace;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" on;
 }
 
-/* Currency display */
 .text-currency-lg {
   font-family: var(--font-jetbrains-mono), monospace;
   font-size: 1.6rem;
@@ -328,30 +422,39 @@ body {
 
 /* ============================================
    GLASS EFFECT
+   Max 20px blur for Capacitor WebView safety
    ============================================ */
 .glass {
   background: var(--glass-bg);
-  backdrop-filter: blur(20px) saturate(1.5);
-  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
   border: 1px solid var(--glass-border);
 }
 
 .glass-heavy {
   background: var(--glass-bg);
-  backdrop-filter: blur(40px) saturate(1.8);
-  -webkit-backdrop-filter: blur(40px) saturate(1.8);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
   border: 1px solid var(--glass-border);
 }
 
 /* ============================================
-   CARD STYLES
+   CARD STYLES — Crimson hover glow
    ============================================ */
 .card {
   background: var(--bg-card);
   border: 1px solid var(--border-primary);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.2s ease,
+              box-shadow 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+              transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.card:hover {
+  border-color: var(--accent-primary-border);
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-2px);
 }
 
 .card-elevated {
@@ -362,12 +465,12 @@ body {
 }
 
 /* ============================================
-   SHEET MODAL — iOS Weighted Sheet Style
+   SHEET MODAL
    ============================================ */
 .sheet-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(0, 0, 0, 0.65);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   z-index: 50;
@@ -381,7 +484,7 @@ body {
   background: var(--bg-card);
   border-radius: 28px 28px 0 0;
   box-shadow: var(--shadow-sheet);
-  border-top: 1px solid var(--border-primary);
+  border-top: 1px solid var(--border-accent);
   z-index: 51;
   max-height: 92vh;
   padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
@@ -390,8 +493,7 @@ body {
 .sheet-handle {
   width: 40px;
   height: 5px;
-  background: var(--border-primary);
-  opacity: 0.8;
+  background: var(--accent-primary-soft);
   border-radius: var(--radius-full);
   margin: 10px auto 0;
 }
@@ -417,34 +519,41 @@ body {
 }
 
 /* ============================================
-   BUTTON STYLES
+   BUTTON STYLES — Crimson Brand System
    ============================================ */
+
+/* Primary: Crimson Red CTAs */
 .btn-primary {
-  background: var(--accent-teal);
-  color: white;
+  background: var(--accent-primary);
+  color: #FFFFFF;
   border-radius: var(--radius-md);
   font-weight: 600;
   font-size: 0.9375rem;
   padding: 12px 24px;
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   cursor: pointer;
   border: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.2);
+  box-shadow: 0 2px 8px var(--accent-primary-glow);
+  position: relative;
+  overflow: hidden;
 }
 
 .btn-primary:hover {
-  background: var(--accent-teal-hover);
-  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.28);
+  background: var(--accent-primary-hover);
+  box-shadow: 0 4px 16px var(--accent-primary-glow), 0 1px 3px rgba(0, 0, 0, 0.2);
+  transform: scale(1.02);
 }
 
 .btn-primary:active {
   transform: scale(0.97);
+  box-shadow: 0 2px 6px var(--accent-primary-glow);
 }
 
+/* Secondary: Dark surface with red-tinted hover */
 .btn-secondary {
   background: var(--bg-tertiary);
   color: var(--text-primary);
@@ -452,7 +561,7 @@ body {
   font-weight: 600;
   font-size: 0.9375rem;
   padding: 12px 24px;
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   cursor: pointer;
   border: 1px solid var(--border-primary);
   display: inline-flex;
@@ -462,13 +571,17 @@ body {
 }
 
 .btn-secondary:hover {
-  background: var(--border-primary);
+  border-color: var(--accent-primary-border);
+  background: var(--accent-primary-soft);
+  color: var(--accent-primary);
+  transform: scale(1.01);
 }
 
 .btn-secondary:active {
   transform: scale(0.97);
 }
 
+/* Ghost: Minimal */
 .btn-ghost {
   background: transparent;
   color: var(--text-secondary);
@@ -486,12 +599,52 @@ body {
 }
 
 .btn-ghost:hover {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
+  background: var(--accent-primary-soft);
+  color: var(--accent-primary);
 }
 
 .btn-ghost:active {
   transform: scale(0.97);
+}
+
+/* ============================================
+   INPUT FOCUS — Crimson ring system
+   ============================================ */
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 0 0 3px var(--accent-primary-soft) !important;
+}
+
+/* Non-currency fields use cyan focus ring */
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="search"]:focus {
+  border-color: var(--accent-secondary) !important;
+  box-shadow: 0 0 0 3px var(--accent-secondary-soft) !important;
+}
+
+/* ============================================
+   GLOW ANIMATIONS
+   ============================================ */
+@keyframes pulse-glow-red {
+  0%, 100% { box-shadow: 0 0 0 0 var(--accent-primary-glow); }
+  50% { box-shadow: 0 0 0 6px rgba(226, 54, 54, 0); }
+}
+
+@keyframes pulse-glow-cyan {
+  0%, 100% { box-shadow: 0 0 0 0 var(--accent-secondary-soft); }
+  50% { box-shadow: 0 0 0 6px rgba(0, 229, 255, 0); }
+}
+
+.glow-pulse-red {
+  animation: pulse-glow-red 2s ease-in-out infinite;
+}
+
+.glow-pulse-cyan {
+  animation: pulse-glow-cyan 2s ease-in-out infinite;
 }
 
 /* ============================================
@@ -506,8 +659,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border-primary);
+  background: var(--accent-primary-soft);
   border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-primary-border);
 }
 
 /* ============================================

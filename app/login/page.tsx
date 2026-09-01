@@ -26,17 +26,17 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-dvh flex flex-col bg-bg-primary relative overflow-hidden">
+    <div className="min-h-dvh flex flex-col bg-bg-base relative overflow-hidden">
       {/* Top right language toggle */}
       <div className="absolute top-6 right-5 z-20 pt-[env(safe-area-inset-top,0px)]">
         <LanguageToggle variant="header" />
       </div>
 
-      {/* Decorative background shapes */}
+      {/* Decorative background ambient glows */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <motion.div
-          className="absolute -top-32 -right-32 w-80 h-80 rounded-full opacity-[0.06]"
-          style={{ background: "var(--accent-teal)" }}
+          className="absolute -top-32 -right-32 w-96 h-96 rounded-full opacity-[0.08]"
+          style={{ background: "var(--accent-primary)" }}
           animate={{
             scale: [1, 1.15, 1],
             rotate: [0, 45, 0],
@@ -48,8 +48,8 @@ export default function LoginPage() {
           }}
         />
         <motion.div
-          className="absolute -bottom-24 -left-24 w-64 h-64 rounded-full opacity-[0.04]"
-          style={{ background: "var(--accent-coral)" }}
+          className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full opacity-[0.06]"
+          style={{ background: "var(--accent-secondary)" }}
           animate={{
             scale: [1, 1.2, 1],
             rotate: [0, -30, 0],
@@ -59,20 +59,6 @@ export default function LoginPage() {
             repeat: Infinity,
             ease: "easeInOut",
             delay: 3,
-          }}
-        />
-        <motion.div
-          className="absolute top-1/3 left-1/4 w-40 h-40 rounded-full opacity-[0.03]"
-          style={{ background: "var(--accent-amber)" }}
-          animate={{
-            y: [0, -20, 0],
-            x: [0, 15, 0],
-          }}
-          transition={{
-            duration: 15,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 5,
           }}
         />
       </div>
@@ -88,21 +74,20 @@ export default function LoginPage() {
         >
           {/* App icon */}
           <motion.div
-            className="w-20 h-20 rounded-[22px] flex items-center justify-center mb-6"
+            className="w-20 h-20 rounded-[22px] flex items-center justify-center mb-6 shadow-xl shadow-accent-primary/25 border border-accent-primary/30"
             style={{
               background:
-                "linear-gradient(135deg, var(--accent-teal), var(--accent-teal-hover))",
-              boxShadow: "0 8px 32px rgba(26, 158, 143, 0.25)",
+                "linear-gradient(135deg, var(--accent-primary), var(--accent-primary-hover))",
             }}
             initial={{ scale: 0.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ ...SPRING.sheet, delay: 0.2 }}
           >
-            <span className="text-4xl">÷</span>
+            <span className="text-4xl text-white font-bold">÷</span>
           </motion.div>
 
           <motion.h1
-            className="text-display text-text-primary text-center"
+            className="text-display text-text-primary text-center tracking-tight"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ ...SPRING.page, delay: 0.3 }}
@@ -123,7 +108,7 @@ export default function LoginPage() {
 
         {/* Sign in section */}
         <motion.div
-          className="flex flex-col gap-3"
+          className="flex flex-col gap-3 max-w-sm mx-auto w-full"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ ...SPRING.page, delay: 0.6 }}
@@ -146,18 +131,12 @@ export default function LoginPage() {
           <motion.button
             onClick={handleSignIn}
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-2xl font-semibold text-[15px] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
-            style={{
-              background: "var(--bg-card)",
-              border: "1.5px solid var(--border-primary)",
-              boxShadow: "var(--shadow-md)",
-              color: "var(--text-primary)",
-            }}
+            className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-2xl font-semibold text-[15px] transition-all disabled:opacity-60 disabled:cursor-not-allowed bg-bg-card border border-border-hairline hover:border-accent-primary-border shadow-md text-text-primary"
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.98 }}
           >
             {isLoading ? (
-              <div className="w-5 h-5 border-2 border-text-tertiary border-t-transparent rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-accent-primary border-t-transparent rounded-full animate-spin" />
             ) : (
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                 <path
