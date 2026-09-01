@@ -20,12 +20,12 @@ const TABS: TabItem[] = [
     matchPrefix: "/home",
     icon: (active) => (
       <svg
-        width="22"
-        height="22"
+        width="20"
+        height="20"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
-        strokeWidth={active ? 2.2 : 1.8}
+        strokeWidth={active ? 2.3 : 1.8}
         strokeLinecap="round"
         strokeLinejoin="round"
       >
@@ -40,12 +40,12 @@ const TABS: TabItem[] = [
     matchPrefix: "/bills",
     icon: (active) => (
       <svg
-        width="22"
-        height="22"
+        width="20"
+        height="20"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
-        strokeWidth={active ? 2.2 : 1.8}
+        strokeWidth={active ? 2.3 : 1.8}
         strokeLinecap="round"
         strokeLinejoin="round"
       >
@@ -61,12 +61,12 @@ const TABS: TabItem[] = [
     matchPrefix: "/settle",
     icon: (active) => (
       <svg
-        width="22"
-        height="22"
+        width="20"
+        height="20"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
-        strokeWidth={active ? 2.2 : 1.8}
+        strokeWidth={active ? 2.3 : 1.8}
         strokeLinecap="round"
         strokeLinejoin="round"
       >
@@ -80,12 +80,12 @@ const TABS: TabItem[] = [
     matchPrefix: "/dorm",
     icon: (active) => (
       <svg
-        width="22"
-        height="22"
+        width="20"
+        height="20"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
-        strokeWidth={active ? 2.2 : 1.8}
+        strokeWidth={active ? 2.3 : 1.8}
         strokeLinecap="round"
         strokeLinejoin="round"
       >
@@ -109,74 +109,65 @@ export function BottomTabBar() {
     { ...TABS[3], label: t("nav.dorm") },
   ];
 
-  const activeIndex = tabs.findIndex((tab) =>
-    pathname.startsWith(tab.matchPrefix)
-  );
-
   return (
-    <nav
-      className="fixed bottom-0 left-0 right-0 z-40 glass border-t border-border-hairline"
+    <div
+      className="fixed inset-x-0 z-40 flex justify-center pointer-events-none px-4 sm:px-6"
       style={{
-        paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 6px)",
+        bottom: "calc(env(safe-area-inset-bottom, 0px) + 12px)",
       }}
     >
-      <div className="relative flex items-center justify-around h-14 max-w-lg mx-auto px-2">
-        {/* Active indicator bar — Crimson brand red */}
-        {activeIndex >= 0 && (
-          <motion.div
-            className="absolute top-0 h-[2.5px] rounded-full"
-            style={{
-              width: `${(100 / tabs.length) * 0.5}%`,
-              left: `${(activeIndex * 100) / tabs.length + (100 / tabs.length) * 0.25}%`,
-              background: "var(--accent-primary)",
-              boxShadow: "0 0 8px var(--accent-primary-glow)",
-            }}
-            layoutId="tab-indicator"
-            transition={SPRING.tab}
-          />
-        )}
-
+      <nav
+        className="pointer-events-auto relative w-full max-w-[380px] sm:max-w-md p-1.5 rounded-full bg-[#121217]/90 backdrop-blur-2xl border border-white/[0.09] shadow-[0_16px_36px_rgba(0,0,0,0.7),0_0_20px_rgba(226,54,54,0.12)] flex items-center justify-between"
+      >
         {tabs.map((tab) => {
           const isActive = pathname.startsWith(tab.matchPrefix);
+
           return (
             <Link
               key={tab.href}
               href={tab.href}
-              className="flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 relative select-none"
+              className="relative flex-1 flex items-center justify-center py-2 px-1 rounded-full text-center transition-colors select-none"
             >
+              {isActive && (
+                <motion.div
+                  layoutId="floatingNavCapsule"
+                  className="absolute inset-0 rounded-full bg-gradient-to-r from-accent-primary to-[#FF3E3E] shadow-[0_2px_14px_rgba(226,54,54,0.45)]"
+                  transition={SPRING.tab}
+                />
+              )}
+
               <motion.div
-                whileTap={{ scale: 0.88 }}
+                whileTap={{ scale: 0.9 }}
                 transition={SPRING.micro}
-                className="flex flex-col items-center gap-0.5"
+                className="relative z-10 flex items-center justify-center gap-1.5"
               >
                 <motion.div
                   animate={{
-                    color: isActive
-                      ? "var(--accent-primary)"
-                      : "var(--text-tertiary)",
+                    color: isActive ? "#FFFFFF" : "var(--text-tertiary)",
                     scale: isActive ? 1.05 : 1,
                   }}
                   transition={SPRING.tab}
+                  className="shrink-0"
                 >
                   {tab.icon(isActive)}
                 </motion.div>
-                <motion.span
-                  className="text-[11px] font-semibold tracking-tight"
-                  animate={{
-                    color: isActive
-                      ? "var(--accent-primary)"
-                      : "var(--text-tertiary)",
-                    opacity: isActive ? 1 : 0.8,
-                  }}
-                  transition={{ duration: 0.15 }}
-                >
-                  {tab.label}
-                </motion.span>
+
+                {isActive && (
+                  <motion.span
+                    initial={{ opacity: 0, scale: 0.85, width: 0 }}
+                    animate={{ opacity: 1, scale: 1, width: "auto" }}
+                    exit={{ opacity: 0, scale: 0.85, width: 0 }}
+                    transition={SPRING.tab}
+                    className="text-caption font-bold text-white tracking-tight overflow-hidden whitespace-nowrap pr-0.5"
+                  >
+                    {tab.label}
+                  </motion.span>
+                )}
               </motion.div>
             </Link>
           );
         })}
-      </div>
-    </nav>
+      </nav>
+    </div>
   );
 }
